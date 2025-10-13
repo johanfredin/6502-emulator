@@ -4,11 +4,14 @@ project(6502_emulator C)
 set(CMAKE_C_STANDARD 99)
 
 add_library(6502_emulator_lib SHARED
-        cpu.c cpu.h bus.c bus.h
+        core/cpu.c
+        core/cpu.h
+        core/bus.c
+        core/bus.h
 )
 
 add_executable(6502_emulator
-        main.c
+        core/main.c
 )
 
 target_link_libraries(6502_emulator 6502_emulator_lib)
