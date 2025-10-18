@@ -3,7 +3,11 @@
 //
 
 #include "cpu.h"
+
+#include <stdio.h>
+
 #include "bus.h"
+#include "../client/dbg.h"
 
 #define N_INSTRUCTIONS 256
 
@@ -24,23 +28,24 @@
 static Instruction *Instruction_get(uint8_t opcode);
 
 
-
 // =========================================================
 // Type definitions
 // =========================================================
 static CPU cpu;
 static Instruction instruction[N_INSTRUCTIONS];
+static bool is_new_instruction = false;
 
-
-void CPU_init() {
+void CPU_load_instructions() {
     // Set instructions (fill the ones we have not yet defined as illegal)
     for (int i = 0; i < N_INSTRUCTIONS; i++) {
-        instruction[i] = (Instruction){.name = "ILLEGAL", .addressing = IMM, .opcode = ILL, .cycles = 2};
+        instruction[i] = (Instruction){.name = "NOP", .addressing = IMP, .opcode = NOP, .cycles = 2};
     }
 
     // Set our defined ones
     instruction[0xA9] = (Instruction){.name = "LDA", .addressing = IMM, .opcode = LDA, .cycles = 2};
     instruction[0x8D] = (Instruction){.name = "STA", .addressing = ABS, .opcode = STA, .cycles = 4};
+
+    log_info("Instructions loaded");
 }
 
 const CPU *CPU_get_state() {
@@ -71,6 +76,15 @@ void CPU_reset() {
 
     // A 6502 reset takes ~8 cycles
     cpu.cycles = 8;
+
+    log_info("CPU started\n"
+             "-----------\n"
+             "A: %02x\n"
+             "X: %02x\n"
+             "Y: %02x\n"
+             "PC: %04x\n"
+             "SP: %04x\n",
+             cpu.a, cpu.x, cpu.y, cpu.pc, cpu.sp);
 }
 
 // Opcodes
@@ -83,6 +97,10 @@ uint8_t LDA(void) {
 uint8_t STA(void) {
     // Store accumulator
     CPU_write(cpu.addr_abs, cpu.a);
+    return 0;
+}
+
+uint8_t NOP(void) {
     return 0;
 }
 
@@ -110,6 +128,11 @@ uint8_t ABS(void) {
     return 0;
 }
 
+uint8_t IMP(void) {
+    cpu.pc++;
+    return 0;
+}
+
 uint8_t CPU_read(const uint16_t addr) {
     return Bus_read(addr);
 }
@@ -119,7 +142,8 @@ void CPU_write(const uint16_t addr, const uint8_t data) {
 }
 
 void CPU_tick() {
-    if (cpu.cycles == 0) {
+    is_new_instruction = cpu.cycles == 0;
+    if (is_new_instruction) {
         cpu.curr_opcode = CPU_read(cpu.pc);
         cpu.pc++;
 
@@ -129,12 +153,24 @@ void CPU_tick() {
         const uint8_t additional_cycle1 = ins->addressing();
         const uint8_t additional_cycle2 = ins->opcode();
 
+        printf("pc=%04x\tinstr=%s\n", cpu.pc, ins->name);
+
         cpu.cycles += (additional_cycle1 & additional_cycle2);
     }
 
     cpu.cycles--;
 }
 
+void CPU_step() {
+    while (cpu.cycles > 0) {
+        CPU_tick();
+    }
+    CPU_tick();
+}
+
+bool CPU_is_time_for_new_instruction() {
+    return is_new_instruction;
+}
 
 // =========================================================
 // Internal helper function definitions

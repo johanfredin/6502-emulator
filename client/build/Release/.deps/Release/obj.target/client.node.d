@@ -1,0 +1,1 @@
+cmd_Release/obj.target/client.node := g++ -o Release/obj.target/client.node -shared -pthread -rdynamic -Wl,-rpath,\$$ORIGIN -m64  -Wl,-soname=client.node -Wl,--start-group Release/obj.target/client/bindings.o -Wl,--end-group /home/johan/IdeaProjects/private/6502-emulator/client/lib6502_emulator_lib.so

@@ -3,13 +3,35 @@
 //
 
 #include "bus.h"
+
+#include <stdlib.h>
 #include <string.h>
+#include "cpu.h"
+#include "../client/dbg.h"
 
 
 static uint8_t ram[RAM_SIZE];
 
 void Bus_init(void) {
     memset(ram, 0, RAM_SIZE);
+}
+
+void Bus_load_rom(const uint16_t org, char *rom) {
+    // Load the program ROM
+    const char *token = strtok(rom, " ");
+    int i = 0;
+    while (token != NULL) {
+        const uint8_t value = (uint8_t) strtoul(token, NULL, 16);
+        Bus_write((org + i), value);
+        token = strtok(NULL, " ");
+        i++;
+    }
+
+    // Load reset vector (cheating for now)
+    Bus_write(CPU_RESET_LO, org & 0xFF);
+    Bus_write(CPU_RESET_HI, (org >> 8) & 0xFF);
+
+    log_info("Rom loaded at 0x%04x\n", org);
 }
 
 uint8_t Bus_read(const uint16_t addr) {
