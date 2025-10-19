@@ -13,5 +13,6 @@ void Bus_init(void);
 uint8_t Bus_read(uint16_t addr);
 void Bus_write(uint16_t addr, uint8_t data);
 void Bus_load_rom(uint16_t org, char *rom);
+const uint8_t *Bus_get_page(uint8_t page);
 
 #endif //INC_6502_EMULATOR_BUS_H

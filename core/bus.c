@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "cpu.h"
-#include "../client/dbg.h"
+#include "dbg.h"
 
 
 static uint8_t ram[RAM_SIZE];
@@ -31,7 +31,7 @@ void Bus_load_rom(const uint16_t org, char *rom) {
     Bus_write(CPU_RESET_LO, org & 0xFF);
     Bus_write(CPU_RESET_HI, (org >> 8) & 0xFF);
 
-    log_info("Rom loaded at 0x%04x\n", org);
+    log_info("Rom loaded at 0x%04x", org);
 }
 
 uint8_t Bus_read(const uint16_t addr) {
@@ -40,4 +40,13 @@ uint8_t Bus_read(const uint16_t addr) {
 
 void Bus_write(const uint16_t addr, const uint8_t data) {
     ram[addr] = data;
+}
+
+const uint8_t *Bus_get_page(const uint8_t page) {
+    if (page > 0xFF) {
+        return Bus_get_page(0);
+    }
+
+    log_info("Page retrieved at: %d", page);
+    return &ram[page * 0x100];
 }

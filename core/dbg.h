@@ -5,12 +5,12 @@
 #include <errno.h>
 #include <string.h>
 
-#define NDEBUG
+// #define NDEBUG
 
 #ifdef NDEBUG
 #define debug(M, ...)
 #else
-#define debug(M, ...) fprintf(stdout, "DEBUG %s:%d: " M "\n",\
+#define log_debug(M, ...) fprintf(stdout, "DEBUG %s:%d: " M "\n",\
 __FILE__, __LINE__, ##__VA_ARGS__)
 #endif
 

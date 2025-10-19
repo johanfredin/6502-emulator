@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 #include "bus.h"
-#include "../client/dbg.h"
+#include "dbg.h"
 
 #define N_INSTRUCTIONS 256
 
@@ -19,7 +19,6 @@
 #define FLAG_U (1 << 5)
 #define FLAG_V (1 << 6)
 #define FLAG_N (1 << 7)
-
 
 
 // =========================================================
@@ -48,8 +47,9 @@ void CPU_load_instructions() {
     log_info("Instructions loaded");
 }
 
-const CPU *CPU_get_state() {
-   return &cpu;
+const CPU *CPU_get_state(void) {
+    log_info("CPU get state called!");
+    return &cpu;
 }
 
 // Emulate cpu start/reset
@@ -77,14 +77,7 @@ void CPU_reset() {
     // A 6502 reset takes ~8 cycles
     cpu.cycles = 8;
 
-    log_info("CPU started\n"
-             "-----------\n"
-             "A: %02x\n"
-             "X: %02x\n"
-             "Y: %02x\n"
-             "PC: %04x\n"
-             "SP: %04x\n",
-             cpu.a, cpu.x, cpu.y, cpu.pc, cpu.sp);
+    log_info("CPU started");
 }
 
 // Opcodes
@@ -129,7 +122,7 @@ uint8_t ABS(void) {
 }
 
 uint8_t IMP(void) {
-    cpu.pc++;
+    // cpu.pc++;
     return 0;
 }
 
@@ -153,7 +146,7 @@ void CPU_tick() {
         const uint8_t additional_cycle1 = ins->addressing();
         const uint8_t additional_cycle2 = ins->opcode();
 
-        printf("pc=%04x\tinstr=%s\n", cpu.pc, ins->name);
+        log_debug("pc=%04x\tinstr=%s", cpu.pc, ins->name);
 
         cpu.cycles += (additional_cycle1 & additional_cycle2);
     }
