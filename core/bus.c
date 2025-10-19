@@ -43,10 +43,6 @@ void Bus_write(const uint16_t addr, const uint8_t data) {
 }
 
 const uint8_t *Bus_get_page(const uint8_t page) {
-    if (page > 0xFF) {
-        return Bus_get_page(0);
-    }
-
-    log_info("Page retrieved at: %d", page);
+    log_debug("Page retrieved at: %d", page);
     return &ram[page * 0x100];
 }

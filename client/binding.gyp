@@ -1,14 +1,18 @@
 {
   "targets": [
     {
-      "target_name": "client",
-      "sources": [ "bindings.c" ],
+      "target_name": "m6502_emulator",
+      "sources": [ "wrapper.c" ],
       "include_dirs": [ "<(module_root_dir)" ],
-      "libraries": [ "<(module_root_dir)/lib6502_emulator_lib.so" ],
+      "libraries": [ "<(module_root_dir)/../cmake-build-debug/lib6502_emulator_lib.so" ],
       "ldflags": [ "-Wl,-rpath,\\$$ORIGIN" ],
       "copies": [
         {
-          "files": [ "<(module_root_dir)/lib6502_emulator_lib.so" ],
+          "files": [
+            "<(module_root_dir)/../cmake-build-debug/lib6502_emulator_lib.so",
+            "<(module_root_dir)/../core/bus.h",
+            "<(module_root_dir)/../core/cpu.h"
+          ],
           "destination": "<(module_root_dir)/build/Release"
         }
       ]

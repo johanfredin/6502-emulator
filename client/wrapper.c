@@ -4,9 +4,8 @@
 #include <stdlib.h>
 
 #include "/home/johan/.nvm/versions/node/v22.20.0/include/node/node_api.h"
-#include "bus.h"
-#include "cpu.h"
 #include "../core/bus.h"
+#include "../core/cpu.h"
 
 static inline napi_value void_return(const napi_env env) {
     napi_value nv;

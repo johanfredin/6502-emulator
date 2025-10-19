@@ -1,14 +1,14 @@
-const addon = require('./build/Release/client.node');
+const emulator = require('./build/Release/m6502_emulator.node');
 
 const rom = "A9 10 8D 00 02";
 const len = rom.length;
 
-addon.cpu_init();
-addon.load_rom(0x0600, len, rom);
-addon.cpu_reset();
+emulator.cpu_init();
+emulator.load_rom(0x0600, len, rom);
+emulator.cpu_reset();
 
-addon.cpu_step();
-addon.cpu_step();
+emulator.cpu_step();
+emulator.cpu_step();
 
-console.log(addon.get_cpu_state());
-console.log(addon.get_bus_page(0x02));
+console.log(emulator.get_cpu_state());
+console.log(emulator.get_bus_page(0x02));
