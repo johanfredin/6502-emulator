@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:x-on="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Leffler 6502</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="./index.js"></script>
+</head>
+<body x-data="emulator()">
+
+<h1>CPU State</h1>
+<div>
+    <p>A: <span x-text="hex(cpu.a)"></span></p>
+    <p>X: <span x-text="hex(cpu.x)"></span></p>
+    <p>Y: <span x-text="hex(cpu.y)"></span></p>
+    <p>SP: <span x-text="hex(cpu.sp, 4)"></span></p>
+    <p>PC: <span x-text="hex(cpu.pc, 4)"></span></p>
+    <p>Status: <span x-text="hex(cpu.status)"></span></p>
+</div>
+
+<button x-on:click="step()">Step</button>
+
+<h2>Memory Page <span x-text="hex(memoryPage)"></span></h2>
+<button x-on:click="loadPage(memoryPage - 1)"><-</button>
+<button x-on:click="loadPage(memoryPage + 1)"> -></button>
+<table>
+    <tbody>
+    <template x-for="row in 16" :key="row">
+        <tr>
+            <td><strong><span x-text="hex(memoryPage * 0x100 + (row - 1) * 0x10, 4)"></span></strong></td>
+            <template x-for="col in 16" :key="col">
+                <td x-text="hex(pageData[(row-1)*16 + (col-1)] ?? 0)"></td>
+            </template>
+        </tr>
+    </template>
+    </tbody>
+</table>
+
+
+</body>
+</html>

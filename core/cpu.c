@@ -5,6 +5,7 @@
 #include "cpu.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "bus.h"
 #include "dbg.h"
@@ -19,7 +20,6 @@
 #define FLAG_U (1 << 5)
 #define FLAG_V (1 << 6)
 #define FLAG_N (1 << 7)
-
 
 // =========================================================
 // Internal helper function declarations
@@ -163,6 +163,44 @@ void CPU_step() {
 
 bool CPU_is_time_for_new_instruction() {
     return is_new_instruction;
+}
+
+Disassembly *CPU_disassemble(const uint16_t start, const uint16_t end) {
+    Disassembly *root = calloc(1, sizeof(Disassembly));
+    Disassembly *cur = root;
+
+    for (uint16_t addr = start; addr < end; ) {
+        const uint16_t origin = addr;
+        char *line = calloc(64, sizeof(char));
+        check_mem_return(line, NULL);
+
+        const uint8_t opcode = CPU_read(addr++);
+        const Instruction *ins = Instruction_get(opcode);
+
+        char operand_str[64] = "";
+        const addressing_fn addr_fn = ins->addressing;
+        if (addr_fn == IMP) {
+            snprintf(operand_str, sizeof(operand_str), "{IMP}");
+        } else if (addr_fn == IMM) {
+            const uint8_t data = CPU_read(addr++);
+            snprintf(operand_str, sizeof(operand_str), "#$%02x   {IMM}", data);
+        } else if (addr_fn == ABS) {
+            const uint8_t lo = CPU_read(addr++);
+            const uint8_t hi = CPU_read(addr++);
+            const uint16_t abs = (hi << 8) | lo;
+            snprintf(operand_str, sizeof(operand_str), "$%04x {ABS}", abs);
+        }
+
+        snprintf(line, 64, "%04x: %-4s %s", origin, ins->name, operand_str);
+        cur->str = line;
+
+        if (addr < end) {
+            cur->next = calloc(1, sizeof(Disassembly));
+            cur = cur->next;
+        }
+    }
+
+    return root;
 }
 
 // =========================================================

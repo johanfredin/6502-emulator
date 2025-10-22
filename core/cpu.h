@@ -47,6 +47,11 @@ typedef struct Instruction {
     uint8_t cycles;
 } Instruction;
 
+typedef struct Disassembly {
+    char *str;
+    struct Disassembly *next;
+} Disassembly;
+
 // Opcodes
 uint8_t LDA(void);
 uint8_t STA(void);
@@ -63,6 +68,8 @@ void CPU_load_instructions();
 void CPU_reset();
 uint8_t CPU_read(uint16_t addr);
 void CPU_write(uint16_t addr, uint8_t data);
+
+Disassembly *CPU_disassemble(uint16_t start, uint16_t end);
 
 // Tick one cycle
 void CPU_tick();
