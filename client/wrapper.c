@@ -47,8 +47,8 @@ static inline napi_value bind_uint8_array(const napi_env env, const uint8_t *bus
 }
 
 napi_value cpu_init(const napi_env env, napi_callback_info info) {
-    CPU_load_instructions();
     Bus_init();
+    CPU_load_instructions();
     return void_return(env);
 }
 

@@ -9,6 +9,7 @@
 
 #include "bus.h"
 #include "dbg.h"
+#include "disassembler.h"
 
 #define N_INSTRUCTIONS 256
 
@@ -20,12 +21,6 @@
 #define FLAG_U (1 << 5)
 #define FLAG_V (1 << 6)
 #define FLAG_N (1 << 7)
-
-// =========================================================
-// Internal helper function declarations
-// =========================================================
-static Instruction *Instruction_get(uint8_t opcode);
-
 
 // =========================================================
 // Type definitions
@@ -140,13 +135,13 @@ void CPU_tick() {
         cpu.curr_opcode = CPU_read(cpu.pc);
         cpu.pc++;
 
-        const Instruction *ins = Instruction_get(cpu.curr_opcode);
+        const Instruction *ins = &instruction[cpu.curr_opcode];
         cpu.cycles = ins->cycles;
 
         const uint8_t additional_cycle1 = ins->addressing();
         const uint8_t additional_cycle2 = ins->opcode();
 
-        log_debug("pc=%04x\tinstr=%s", cpu.pc, ins->name);
+        // log_debug("pc=%04x\tinstr=%s", cpu.pc, ins->name);
 
         cpu.cycles += (additional_cycle1 & additional_cycle2);
     }
@@ -158,54 +153,15 @@ void CPU_step() {
     while (cpu.cycles > 0) {
         CPU_tick();
     }
+    puts(Disassembler_get_line_at(cpu.pc));
     CPU_tick();
+}
+
+Instruction *CPU_get_instruction(uint8_t opcode) {
+    return &instruction[opcode];
 }
 
 bool CPU_is_time_for_new_instruction() {
     return is_new_instruction;
 }
 
-Disassembly *CPU_disassemble(const uint16_t start, const uint16_t end) {
-    Disassembly *root = calloc(1, sizeof(Disassembly));
-    Disassembly *cur = root;
-
-    for (uint16_t addr = start; addr < end; ) {
-        const uint16_t origin = addr;
-        char *line = calloc(64, sizeof(char));
-        check_mem_return(line, NULL);
-
-        const uint8_t opcode = CPU_read(addr++);
-        const Instruction *ins = Instruction_get(opcode);
-
-        char operand_str[64] = "";
-        const addressing_fn addr_fn = ins->addressing;
-        if (addr_fn == IMP) {
-            snprintf(operand_str, sizeof(operand_str), "{IMP}");
-        } else if (addr_fn == IMM) {
-            const uint8_t data = CPU_read(addr++);
-            snprintf(operand_str, sizeof(operand_str), "#$%02x   {IMM}", data);
-        } else if (addr_fn == ABS) {
-            const uint8_t lo = CPU_read(addr++);
-            const uint8_t hi = CPU_read(addr++);
-            const uint16_t abs = (hi << 8) | lo;
-            snprintf(operand_str, sizeof(operand_str), "$%04x {ABS}", abs);
-        }
-
-        snprintf(line, 64, "%04x: %-4s %s", origin, ins->name, operand_str);
-        cur->str = line;
-
-        if (addr < end) {
-            cur->next = calloc(1, sizeof(Disassembly));
-            cur = cur->next;
-        }
-    }
-
-    return root;
-}
-
-// =========================================================
-// Internal helper function definitions
-// =========================================================
-static inline Instruction *Instruction_get(const uint8_t opcode) {
-    return &instruction[opcode];
-}
