@@ -141,8 +141,6 @@ void CPU_tick() {
         const uint8_t additional_cycle1 = ins->addressing();
         const uint8_t additional_cycle2 = ins->opcode();
 
-        // log_debug("pc=%04x\tinstr=%s", cpu.pc, ins->name);
-
         cpu.cycles += (additional_cycle1 & additional_cycle2);
     }
 

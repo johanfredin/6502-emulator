@@ -1,20 +1,43 @@
 document.addEventListener('alpine:init', () => {
     Alpine.data('emulator', () => ({
         cpu: {},
-        memoryPage: 0xFF,
+        memoryPage: 0x00,
         pageData: [],
+        disassembly: [],
+        pcToLineIndex: {},
 
-        hex: (value, size = 2) => {
+        // status bitmasks
+        FLAG_C: (1 << 0),
+        FLAG_Z: (1 << 1),
+        FLAG_I: (1 << 2),
+        FLAG_D: (1 << 3),
+        FLAG_B: (1 << 4),
+        FLAG_U: (1 << 5),
+        FLAG_V: (1 << 6),
+        FLAG_N: (1 << 7),
+
+        isFlagSet(flag) {
+            return (this.cpu.status & flag) ? 1 : 0;
+        },
+
+        hex(value, size = 2) {
             if (!value) {
                 value = 0;
             }
             return value.toString(16).toUpperCase().padStart(size, '0');
         },
 
+        async reset() {
+            await fetch('/reset');
+            await this.getCpuState();
+            await this.loadPage(this.memoryPage);
+            await this.loadDisassembly();
+        },
+
         async init() {
             await this.getCpuState();
             await this.loadPage(this.memoryPage);
-            console.log("init done");
+            await this.loadDisassembly();
         },
 
         async getCpuState() {
@@ -23,8 +46,9 @@ document.addEventListener('alpine:init', () => {
         },
 
         async step() {
-            await fetch('/step');
-            await this.getCpuState();
+            const cpuRes = await fetch('/step');
+            this.cpu = await cpuRes.json();
+            await this.loadPage(this.memoryPage);
         },
 
         async loadPage(page) {
@@ -41,8 +65,20 @@ document.addEventListener('alpine:init', () => {
             const res = await fetch('/memory/' + page);
             const buffer = await res.arrayBuffer();
             this.pageData = new Uint8Array(buffer);
-            console.log(this.pageData);
         },
 
+        async loadDisassembly() {
+            const res = await fetch('/disassembly');
+            this.disassembly = await res.json();
+
+            // Build adress-to-index map
+            this.disassembly.forEach((line, index) => {
+                this.pcToLineIndex[line.pc] = index;
+            })
+        },
+
+        isCurrentLine(address) {
+            return address === this.cpu.pc;
+        }
     }))
 });

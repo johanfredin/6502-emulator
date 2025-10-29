@@ -6,36 +6,116 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="./index.js"></script>
 </head>
+<style>
+    body {
+        font-family: 'Courier New', monospace;
+        display: flex;
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .panel {
+        flex: 1;
+    }
+
+    .disassembly-line {
+        padding: 2px 5px;
+        margin: 1px 0;
+    }
+
+    .disassembly-line.current {
+        background-color: #ffff00;
+        font-weight: bold;
+    }
+
+    table {
+        border-collapse: collapse;
+    }
+
+    td {
+        padding: 2px 5px;
+        border: 1px solid #ccc;
+    }
+
+    .flags {
+        display: flex;
+        gap: 8px;
+        font-family: monospace;
+        font-weight: bold;
+    }
+
+    .flag {
+        padding: 2px 6px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+    }
+
+    .flag.set {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+    .flag.clear {
+        background-color: #f0f0f0;
+        color: #999;
+    }
+</style>
 <body x-data="emulator()">
 
-<h1>CPU State</h1>
-<div>
-    <p>A: <span x-text="hex(cpu.a)"></span></p>
-    <p>X: <span x-text="hex(cpu.x)"></span></p>
-    <p>Y: <span x-text="hex(cpu.y)"></span></p>
-    <p>SP: <span x-text="hex(cpu.sp, 4)"></span></p>
-    <p>PC: <span x-text="hex(cpu.pc, 4)"></span></p>
-    <p>Status: <span x-text="hex(cpu.status)"></span></p>
+<div class="panel">
+    <h1>CPU State</h1>
+    <div>
+        <p>A: <span x-text="hex(cpu.a)"></span></p>
+        <p>X: <span x-text="hex(cpu.x)"></span></p>
+        <p>Y: <span x-text="hex(cpu.y)"></span></p>
+        <p>SP: <span x-text="hex(cpu.sp, 4)"></span></p>
+        <p>PC: <span x-text="hex(cpu.pc, 4)"></span></p>
+
+        <h3>Status</h3>
+        <div class="flags">
+            <span class="flag" :class="isFlagSet(FLAG_N) ? 'set' : 'clear'">N</span>
+            <span class="flag" :class="isFlagSet(FLAG_V) ? 'set' : 'clear'">V</span>
+            <span class="flag" :class="isFlagSet(FLAG_U) ? 'set' : 'clear'">U</span>
+            <span class="flag" :class="isFlagSet(FLAG_B) ? 'set' : 'clear'">B</span>
+            <span class="flag" :class="isFlagSet(FLAG_D) ? 'set' : 'clear'">D</span>
+            <span class="flag" :class="isFlagSet(FLAG_I) ? 'set' : 'clear'">I</span>
+            <span class="flag" :class="isFlagSet(FLAG_Z) ? 'set' : 'clear'">Z</span>
+            <span class="flag" :class="isFlagSet(FLAG_C) ? 'set' : 'clear'">C</span>
+    </span>
+        </div>
+        <p/>
+        <button x-on:click="step()">Step</button>
+        <button x-on:click="reset()"> RESET</button>
+    </div>
+    <h2>Disassembly</h2>
+    <div>
+        <template x-for="line in disassembly" :key="line.address">
+            <div class="disassembly-line"
+                 :class="{ 'current': isCurrentLine(line.address) }"
+                 x-text="line.line">
+
+            </div>
+        </template>
+    </div>
 </div>
 
-<button x-on:click="step()">Step</button>
-
-<h2>Memory Page <span x-text="hex(memoryPage)"></span></h2>
-<button x-on:click="loadPage(memoryPage - 1)"><-</button>
-<button x-on:click="loadPage(memoryPage + 1)"> -></button>
-<table>
-    <tbody>
-    <template x-for="row in 16" :key="row">
-        <tr>
-            <td><strong><span x-text="hex(memoryPage * 0x100 + (row - 1) * 0x10, 4)"></span></strong></td>
-            <template x-for="col in 16" :key="col">
-                <td x-text="hex(pageData[(row-1)*16 + (col-1)] ?? 0)"></td>
-            </template>
-        </tr>
-    </template>
-    </tbody>
-</table>
-
+<div class="panel">
+    <h2>Memory Page <span x-text="hex(memoryPage)"></span></h2>
+    <button x-on:click="loadPage(memoryPage - 1)"><-</button>
+    <button x-on:click="loadPage(memoryPage + 1)"> -></button>
+    <table>
+        <tbody>
+        <template x-for="row in 16" :key="row">
+            <tr>
+                <td><strong><span x-text="hex(memoryPage * 0x100 + (row - 1) * 0x10, 4)"></span></strong></td>
+                <template x-for="col in 16" :key="col">
+                    <td x-text="hex(pageData[(row-1)*16 + (col-1)] ?? 0)"></td>
+                </template>
+            </tr>
+        </template>
+        </tbody>
+    </table>
+</div>
 
 </body>
 </html>

@@ -7,12 +7,18 @@ const port = 3000;
 
 // Load up the emulator with a stupid program that does
 // LDA #$10, STA $00, program starts at $0600
-emulator.cpu_init();
-const rom = "A9 10 8D 00 00";
-const len = rom.length;
-emulator.load_rom(0x0600, len, rom);
-emulator.cpu_reset();
+const reset = function() {
+    emulator.cpu_reset();
+    emulator.cpu_init();
+    const rom = "A9 10 8D 00 00";
+    const len = rom.length;
+    emulator.load_rom(0x0600, len, rom);
+    emulator.disassemble(0x0600, 0x0700);
+    emulator.cpu_reset();
+}
 
+// Init on startup
+reset();
 
 // Serve static files
 app.use(express.static(path.join(__dirname)));
@@ -22,6 +28,11 @@ app.get('/cpu', (req, res) => {
     const cpuState = emulator.get_cpu_state();
     return res.json(cpuState);
 });
+
+app.get('/reset', (req, res) => {
+    reset();
+    return res.status(200).send();
+})
 
 app.get('/step', (req, res) => {
     emulator.cpu_step();
@@ -35,19 +46,11 @@ app.get('/memory/:page', (req, res) => {
     return res.send(Buffer.from(chunk));
 })
 
+app.get('/disassembly', (req, res) => {
+    const disassembly = emulator.get_disassembly();
+    return res.json(disassembly);
+})
+
 app.listen(port, () => console.log(`Server running on port ${port}`));
 
-const helloWorld = () => {
-    const rom = "A9 10 8D 00 02";
-    const len = rom.length;
 
-    emulator.cpu_init();
-    emulator.load_rom(0x0600, len, rom);
-    emulator.cpu_reset();
-
-    emulator.cpu_step();
-    emulator.cpu_step();
-
-    console.log(emulator.get_cpu_state());
-    console.log(emulator.get_bus_page(0x02));
-}

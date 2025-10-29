@@ -6,6 +6,7 @@
 #include "/home/johan/.nvm/versions/node/v22.20.0/include/node/node_api.h"
 #include "../core/bus.h"
 #include "../core/cpu.h"
+#include "../core/disassembler.h"
 
 static inline napi_value void_return(const napi_env env) {
     napi_value nv;
@@ -76,7 +77,7 @@ napi_value load_rom(const napi_env env, const napi_callback_info info) {
     // Retrieve the rom string itself
 
     char *rom = calloc(rom_size + 1, sizeof(char));
-    check_mem(rom, goto catch);
+    try(rom, "Could not allocate rom");
     const napi_value rom_arg = args[2];
     const napi_status rom_result = napi_get_value_string_utf8(env, rom_arg, rom, rom_size + 1, NULL);
     try(rom_result == napi_ok, "Could not get the rom, return code=%d", rom_result);
@@ -92,8 +93,59 @@ catch:
 }
 
 
+napi_value disassemble(const napi_env env, const napi_callback_info info) {
+    size_t argc = 2;
+    napi_value args[2];
+    const napi_status argc_result = napi_get_cb_info(env, info, &argc, args, NULL, NULL);
+    try(argc_result == napi_ok, "Failed to retrieve arguments, status=%u", argc_result);
+    try(argc == 2, "Wrong amount of arguments, expected: 2, got %lu", argc);
+
+    // Default to a small range if no args provided
+    uint32_t start = 0x0600;
+    uint32_t end = 0x0700;
+
+    if (argc >= 2) {
+        napi_get_value_uint32(env, args[0], &start);
+        napi_get_value_uint32(env, args[1], &end);
+    }
+
+    Disassembler_parse_binary((uint16_t) start, (uint16_t) end);
+    return void_return(env);
+catch:
+    napi_throw_error(env, NULL, "Error loading rom");
+    return void_return(env);
+}
+
 napi_value cpu_reset(const napi_env env, napi_callback_info info) {
     CPU_reset();
+    return void_return(env);
+}
+
+napi_value get_disassembly(const napi_env env, napi_callback_info info) {
+    SourceCode *code = Disassembler_get_code();
+    try(code, "Code is null");
+    try(code->lines, "Code is empty");
+
+    napi_value result;
+    napi_create_array(env, &result);
+
+    for (uint16_t i = 0; i < code->n_lines; i++) {
+        napi_value source_line;
+        napi_create_object(env, &source_line);
+
+        // Add address
+        bind_unsigned_int_field(env, source_line, "address", code->lines[i].address);
+        // Add text
+        napi_value line_text;
+        napi_create_string_utf8(env, code->lines[i].line, NAPI_AUTO_LENGTH, &line_text);
+        napi_set_named_property(env, source_line, "line", line_text);
+
+        napi_set_element(env, result, i, source_line);
+    }
+
+    return result;
+catch:
+    napi_throw_error(env, NULL, "Error getting disassembled code");
     return void_return(env);
 }
 
@@ -158,6 +210,8 @@ napi_value init(const napi_env env, const napi_value exports) {
     napi_value fn_get_cpu_state;
     napi_value fn_get_bus_page;
     napi_value fn_cpu_step;
+    napi_value fn_disassemble;
+    napi_value fn_get_disassembly;
 
     napi_create_function(env, "cpu_init", NAPI_AUTO_LENGTH, cpu_init, NULL, &fn_cpu_init);
     napi_create_function(env, "load_rom", NAPI_AUTO_LENGTH, load_rom, NULL, &fn_load_rom);
@@ -165,12 +219,16 @@ napi_value init(const napi_env env, const napi_value exports) {
     napi_create_function(env, "get_cpu_state", NAPI_AUTO_LENGTH, get_cpu_state, NULL, &fn_get_cpu_state);
     napi_create_function(env, "get_bus_page", NAPI_AUTO_LENGTH, get_bus_page, NULL, &fn_get_bus_page);
     napi_create_function(env, "cpu_step", NAPI_AUTO_LENGTH, cpu_step, NULL, &fn_cpu_step);
+    napi_create_function(env, "disassemble", NAPI_AUTO_LENGTH, disassemble, NULL, &fn_disassemble);
+    napi_create_function(env, "get_disassembly", NAPI_AUTO_LENGTH, get_disassembly, NULL, &fn_get_disassembly);
     napi_set_named_property(env, exports, "cpu_init", fn_cpu_init);
     napi_set_named_property(env, exports, "load_rom", fn_load_rom);
     napi_set_named_property(env, exports, "cpu_reset", fn_cpu_reset);
     napi_set_named_property(env, exports, "get_cpu_state", fn_get_cpu_state);
     napi_set_named_property(env, exports, "get_bus_page", fn_get_bus_page);
     napi_set_named_property(env, exports, "cpu_step", fn_cpu_step);
+    napi_set_named_property(env, exports, "disassemble", fn_disassemble);
+    napi_set_named_property(env, exports, "get_disassembly", fn_get_disassembly);
     return exports;
 }
 

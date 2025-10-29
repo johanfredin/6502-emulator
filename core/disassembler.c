@@ -9,32 +9,21 @@
 #include "cpu.h"
 #include "dbg.h"
 
-typedef struct SourceLine {
-    char *line;
-    uint16_t address;
-} SourceLine;
-
-typedef struct SourceCode {
-    SourceLine *lines;
-    uint16_t n_lines;
-} SourceCode;
-
 static SourceCode code;
 
-void Disassembler_get_source_code(const uint16_t start, const uint16_t end) {
+void Disassembler_parse_binary(const uint16_t start, const uint16_t end) {
     const uint16_t max_instructions = end - start;
     SourceLine *lines = calloc(max_instructions, sizeof(SourceLine));
     check(lines, "Failed to allocate memory for disassembly lines", {
-          exit(1);
-          });
+        exit(1);
+    });
 
     uint16_t n_instructions = 0;
     for (uint16_t addr = start; addr < end;) {
+        // Save the start of the current line to accurately print the memory address of instruction
         const uint16_t origin = addr;
-        // Save the start of the current line to accurately print memory address of instruction
 
         char buffer[64];
-
         const uint8_t opcode = CPU_read(addr++);
         const Instruction *ins = CPU_get_instruction(opcode);
 
@@ -44,7 +33,7 @@ void Disassembler_get_source_code(const uint16_t start, const uint16_t end) {
             snprintf(operand_str, sizeof(operand_str), "{IMP}");
         } else if (addr_fn == IMM) {
             const uint8_t data = CPU_read(addr++);
-            snprintf(operand_str, sizeof(operand_str), "#$%02x   {IMM}", data);
+            snprintf(operand_str, sizeof(operand_str), "#$%02x {IMM}", data);
         } else if (addr_fn == ABS) {
             const uint8_t lo = CPU_read(addr++);
             const uint8_t hi = CPU_read(addr++);
@@ -69,6 +58,11 @@ void Disassembler_get_source_code(const uint16_t start, const uint16_t end) {
     }
 
     code = (SourceCode){lines, n_instructions};
+    log_info("Binary disassembled");
+}
+
+SourceCode *Disassembler_get_code() {
+    return &code;
 }
 
 char *Disassembler_get_line_at(const uint16_t address) {

@@ -11,7 +11,8 @@
           "files": [
             "<(module_root_dir)/../cmake-build-debug/lib6502_emulator_lib.so",
             "<(module_root_dir)/../core/bus.h",
-            "<(module_root_dir)/../core/cpu.h"
+            "<(module_root_dir)/../core/cpu.h",
+            "<(module_root_dir)/../core/disassembler.h"
           ],
           "destination": "<(module_root_dir)/build/Release"
         }

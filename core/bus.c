@@ -33,9 +33,6 @@ void Bus_load_rom(const uint16_t org, char *rom) {
     Bus_write(CPU_RESET_HI, (org >> 8) & 0xFF);
 
     log_info("Rom loaded at 0x%04x", org);
-
-    //TODO: Hack for client, remove!
-    Disassembler_get_source_code(0, 0xFFFF);
 }
 
 uint8_t Bus_read(const uint16_t addr) {

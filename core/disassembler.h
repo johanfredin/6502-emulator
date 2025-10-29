@@ -6,8 +6,18 @@
 #define INC_6502_EMULATOR_DISASSEMBLER_H
 #include <stdint.h>
 
-void Disassembler_get_source_code(uint16_t start, uint16_t end);
-char *Disassembler_get_line_at(uint16_t address);
+typedef struct SourceLine {
+    char *line;
+    uint16_t address;
+} SourceLine;
 
+typedef struct SourceCode {
+    SourceLine *lines;
+    uint16_t n_lines;
+} SourceCode;
+
+void Disassembler_parse_binary(uint16_t start, uint16_t end);
+char *Disassembler_get_line_at(uint16_t address);
+SourceCode *Disassembler_get_code();
 
 #endif //INC_6502_EMULATOR_DISASSEMBLER_H
