@@ -14,16 +14,13 @@ static SourceCode code;
 void Disassembler_parse_binary(const uint16_t start, const uint16_t end) {
     const uint16_t max_instructions = end - start;
     SourceLine *lines = calloc(max_instructions, sizeof(SourceLine));
-    check(lines, "Failed to allocate memory for disassembly lines", {
-        exit(1);
-    });
-
+    try(lines, "Failed to allocate memory for disassembly lines");
     uint16_t n_instructions = 0;
     for (uint16_t addr = start; addr < end;) {
         // Save the start of the current line to accurately print the memory address of instruction
         const uint16_t origin = addr;
 
-        char buffer[64];
+        char buffer[32];
         const uint8_t opcode = CPU_read(addr++);
         const Instruction *ins = CPU_get_instruction(opcode);
 
@@ -39,26 +36,35 @@ void Disassembler_parse_binary(const uint16_t start, const uint16_t end) {
             const uint8_t hi = CPU_read(addr++);
             const uint16_t abs = (hi << 8) | lo;
             snprintf(operand_str, sizeof(operand_str), "$%04x {ABS}", abs);
+        } else if (addr_fn == ZP0) {
+            const uint8_t data = CPU_read(addr++);
+            snprintf(operand_str, sizeof(operand_str), "$%02x {ZP0}", data);
+        } else if (addr_fn == ZPX) {
+            const uint8_t data = CPU_read(addr++);
+            snprintf(operand_str, sizeof(operand_str), "$%02x,X {ZPX}", data);
+        } else if (addr_fn == ZPY) {
+            const uint8_t data = CPU_read(addr++);
+            snprintf(operand_str, sizeof(operand_str), "$%02x,Y {ZPY}", data);
         }
 
-        snprintf(buffer, 64,
-            "%04x: %-4s %s",
-            origin,
-            ins->name,
-            operand_str
+        snprintf(buffer, 32,
+                 "%04x: %-4s %s",
+                 origin,
+                 ins->name,
+                 operand_str
         );
 
         lines[n_instructions].address = origin;
         lines[n_instructions].line = strdup(buffer);
-        check(lines[n_instructions].line, "Failed to allocate memory for new line", {
-              exit(1);
-        });
-
+        try(lines[n_instructions].line, "Failed to allocate memory for new line");
         n_instructions++;
     }
 
     code = (SourceCode){lines, n_instructions};
     log_info("Binary disassembled");
+
+catch:
+    if (lines) free(lines);
 }
 
 SourceCode *Disassembler_get_code() {
@@ -66,7 +72,7 @@ SourceCode *Disassembler_get_code() {
 }
 
 char *Disassembler_get_line_at(const uint16_t address) {
-    for (uint16_t i = 0; i < code.n_lines; i++) {
+    for (int i = 0; i < code.n_lines; i++) {
         if (code.lines[i].address == address) {
             return code.lines[i].line;
         }

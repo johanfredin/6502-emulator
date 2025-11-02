@@ -49,14 +49,31 @@ typedef struct Instruction {
 
 // Opcodes
 uint8_t LDA(void);
+uint8_t LDX(void);
+uint8_t LDY(void);
 uint8_t STA(void);
+uint8_t STX(void);
+uint8_t STY(void);
+uint8_t TAX(void);
+uint8_t TAY(void);
+uint8_t TXA(void);
+uint8_t TYA(void);
 uint8_t NOP(void);
 uint8_t ILL(void);
+uint8_t SEC(void);
+uint8_t CLC(void);
+uint8_t INC(void);
+uint8_t INX(void);
+uint8_t INY(void);
 
 // Addressing modes
 uint8_t IMM(void);
 uint8_t ABS(void);
 uint8_t IMP(void);
+uint8_t ZP0(void);
+uint8_t ZPX(void);
+uint8_t ZPY(void);
+
 
 const CPU *CPU_get_state();
 void CPU_load_instructions();

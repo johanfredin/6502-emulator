@@ -1,5 +1,5 @@
 // TODO: Fix ugly workaround
-#include "dbg.h"
+#include "../core/dbg.h"
 #include <stdio.h>
 #include <stdlib.h>
 

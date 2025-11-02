@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include "bus.h"
 #include "cpu.h"
 #include "disassembler.h"
@@ -8,24 +6,19 @@ int main(void) {
     Bus_init();
     CPU_load_instructions();
 
-    /*
-     * Example dummy program
-     * LDA #$10
-     * STA $0200
-     */
-    char program[] = "A9 10 8D 00 02";
+    char program[] = "A9 0A 8D 00 02 A2 14 8E 01 02 A0 1E 8C 02 02 A9 00 8A A2 00 98 A0 00 AA A8";
     Bus_load_rom(0x0600, program);
     CPU_reset();
 
     // Dump code
-    FILE *f = fopen("./code.txt", "w");
-    SourceCode *code = Disassembler_get_code();
-    for (int i = 0; i < code->n_lines; i++) {
-        puts(code->lines[i].line);
-        fprintf(f, "%s\n", code->lines[i].line);
-    }
-
-
+    Disassembler_parse_binary(0x0600, 0x06FF);
+    CPU_step();
+    CPU_step();
+    CPU_step();
+    CPU_step();
+    CPU_step();
+    CPU_step();
+    CPU_step();
     CPU_step();
     CPU_step();
     CPU_step();

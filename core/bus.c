@@ -8,7 +8,6 @@
 #include <string.h>
 #include "cpu.h"
 #include "dbg.h"
-#include "disassembler.h"
 
 
 static uint8_t ram[RAM_SIZE];

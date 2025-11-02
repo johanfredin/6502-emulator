@@ -5,12 +5,10 @@ const path = require('path');
 const app = express();
 const port = 3000;
 
-// Load up the emulator with a stupid program that does
-// LDA #$10, STA $00, program starts at $0600
+// Load up the emulator with a stupid program
 const reset = function() {
-    emulator.cpu_reset();
     emulator.cpu_init();
-    const rom = "A9 10 8D 00 00";
+    const rom = "A9 FE 85 00 A6 00 86 01 A4 01 84 02";
     const len = rom.length;
     emulator.load_rom(0x0600, len, rom);
     emulator.disassemble(0x0600, 0x0700);
