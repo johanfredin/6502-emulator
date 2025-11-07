@@ -25,26 +25,40 @@ void Disassembler_parse_binary(const uint16_t start, const uint16_t end) {
         const Instruction *ins = CPU_get_instruction(opcode);
 
         char operand_str[16] = "";
+        const size_t operand_len = sizeof(operand_str);
         const addressing_fn addr_fn = ins->addressing;
         if (addr_fn == IMP) {
-            snprintf(operand_str, sizeof(operand_str), "{IMP}");
+            snprintf(operand_str, operand_len, "{IMP}    ");
         } else if (addr_fn == IMM) {
             const uint8_t data = CPU_read(addr++);
-            snprintf(operand_str, sizeof(operand_str), "#$%02x {IMM}", data);
+            snprintf(operand_str, operand_len, "#$%02x   {IMM}", data);
         } else if (addr_fn == ABS) {
             const uint8_t lo = CPU_read(addr++);
             const uint8_t hi = CPU_read(addr++);
             const uint16_t abs = (hi << 8) | lo;
-            snprintf(operand_str, sizeof(operand_str), "$%04x {ABS}", abs);
+            snprintf(operand_str, operand_len, "$%04x {ABS}", abs);
+        } else if (addr_fn == ABX) {
+            const uint8_t lo = CPU_read(addr++);
+            const uint8_t hi = CPU_read(addr++);
+            const uint16_t abx = (hi << 8) | lo;
+            snprintf(operand_str, operand_len, "$%04x,X {ABX}", abx);
+        } else if (addr_fn == ABY) {
+            const uint8_t lo = CPU_read(addr++);
+            const uint8_t hi = CPU_read(addr++);
+            const uint16_t aby = (hi << 8) | lo;
+            snprintf(operand_str, operand_len, "$%04x,Y {ABY}", aby);
         } else if (addr_fn == ZP0) {
             const uint8_t data = CPU_read(addr++);
-            snprintf(operand_str, sizeof(operand_str), "$%02x {ZP0}", data);
+            snprintf(operand_str, operand_len, "$%02x    {ZP0}", data);
         } else if (addr_fn == ZPX) {
             const uint8_t data = CPU_read(addr++);
-            snprintf(operand_str, sizeof(operand_str), "$%02x,X {ZPX}", data);
+            snprintf(operand_str, operand_len, "$%02x,X  {ZPX}", data);
         } else if (addr_fn == ZPY) {
             const uint8_t data = CPU_read(addr++);
-            snprintf(operand_str, sizeof(operand_str), "$%02x,Y {ZPY}", data);
+            snprintf(operand_str, operand_len, "$%02x,Y  {ZPY}", data);
+        } else if (addr_fn == REL) {
+            const uint8_t data = CPU_read(addr++);
+            snprintf(operand_str, operand_len, "$%02x    {REL}", data);
         }
 
         snprintf(buffer, 32,
@@ -62,9 +76,11 @@ void Disassembler_parse_binary(const uint16_t start, const uint16_t end) {
 
     code = (SourceCode){lines, n_instructions};
     log_info("Binary disassembled");
-
+    return;
 catch:
-    if (lines) free(lines);
+    if (lines) {
+        free(lines);
+    }
 }
 
 SourceCode *Disassembler_get_code() {

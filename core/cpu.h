@@ -65,14 +65,21 @@ uint8_t CLC(void);
 uint8_t INC(void);
 uint8_t INX(void);
 uint8_t INY(void);
+uint8_t BNE(void);
+uint8_t CMP(void);
+uint8_t CPX(void);
+uint8_t CPY(void);
 
 // Addressing modes
 uint8_t IMM(void);
 uint8_t ABS(void);
+uint8_t ABX(void);
+uint8_t ABY(void);
 uint8_t IMP(void);
 uint8_t ZP0(void);
 uint8_t ZPX(void);
 uint8_t ZPY(void);
+uint8_t REL(void);
 
 
 const CPU *CPU_get_state();

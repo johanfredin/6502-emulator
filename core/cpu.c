@@ -28,7 +28,7 @@ static CPU cpu;
 static Instruction instruction[N_INSTRUCTIONS];
 static bool is_new_instruction = false;
 
-static inline void set_flag(const uint8_t flag, const bool b) {
+static void set_flag(const uint8_t flag, const bool b) {
     if (b) {
         cpu.status |= flag;
     } else {
@@ -36,8 +36,8 @@ static inline void set_flag(const uint8_t flag, const bool b) {
     }
 }
 
-static inline uint8_t next_byte(void) {
-    return CPU_read(cpu.pc++);
+static bool get_flag(const uint8_t flag) {
+    return cpu.status & flag;
 }
 
 void CPU_load_instructions() {
@@ -49,13 +49,16 @@ void CPU_load_instructions() {
     // Set our defined ones
     instruction[0xA9] = (Instruction){.name = "LDA", .addressing = IMM, .opcode = LDA, .cycles = 2};
     instruction[0xAD] = (Instruction){.name = "LDA", .addressing = ABS, .opcode = LDA, .cycles = 4};
+    instruction[0xBD] = (Instruction){.name = "LDA", .addressing = ABX, .opcode = LDA, .cycles = 4};
+    instruction[0xB9] = (Instruction){.name = "LDA", .addressing = ABY, .opcode = LDA, .cycles = 4};
     instruction[0xA5] = (Instruction){.name = "LDA", .addressing = ZP0, .opcode = LDA, .cycles = 3};
-    instruction[0xA0] = (Instruction){.name = "LDY", .addressing = IMM, .opcode = LDY, .cycles = 2};
-    instruction[0xAC] = (Instruction){.name = "LDY", .addressing = ABS, .opcode = LDY, .cycles = 4};
-    instruction[0xA4] = (Instruction){.name = "LDY", .addressing = ZP0, .opcode = LDY, .cycles = 3};
+    instruction[0xB5] = (Instruction){.name = "LDA", .addressing = ZPX, .opcode = LDA, .cycles = 4};
     instruction[0xA2] = (Instruction){.name = "LDX", .addressing = IMM, .opcode = LDX, .cycles = 2};
     instruction[0xAE] = (Instruction){.name = "LDX", .addressing = ABS, .opcode = LDX, .cycles = 4};
     instruction[0xA6] = (Instruction){.name = "LDX", .addressing = ZP0, .opcode = LDX, .cycles = 3};
+    instruction[0xA0] = (Instruction){.name = "LDY", .addressing = IMM, .opcode = LDY, .cycles = 2};
+    instruction[0xAC] = (Instruction){.name = "LDY", .addressing = ABS, .opcode = LDY, .cycles = 4};
+    instruction[0xA4] = (Instruction){.name = "LDY", .addressing = ZP0, .opcode = LDY, .cycles = 3};
     instruction[0x8A] = (Instruction){.name = "TXA", .addressing = IMP, .opcode = TXA, .cycles = 2};
     instruction[0x98] = (Instruction){.name = "TYA", .addressing = IMP, .opcode = TYA, .cycles = 2};
     instruction[0xAA] = (Instruction){.name = "TAX", .addressing = IMP, .opcode = TAX, .cycles = 2};
@@ -66,6 +69,27 @@ void CPU_load_instructions() {
     instruction[0x86] = (Instruction){.name = "STX", .addressing = ZP0, .opcode = STX, .cycles = 3};
     instruction[0x8C] = (Instruction){.name = "STY", .addressing = ABS, .opcode = STY, .cycles = 4};
     instruction[0x84] = (Instruction){.name = "STY", .addressing = ZP0, .opcode = STY, .cycles = 3};
+    instruction[0xE6] = (Instruction){.name = "INC", .addressing = ZP0, .opcode = INC, .cycles = 5};
+    instruction[0xF6] = (Instruction){.name = "INC", .addressing = ZPX, .opcode = INC, .cycles = 6};
+    instruction[0xEE] = (Instruction){.name = "INC", .addressing = ABS, .opcode = INC, .cycles = 6};
+    instruction[0xFE] = (Instruction){.name = "INC", .addressing = ABX, .opcode = INC, .cycles = 7};
+    instruction[0xE8] = (Instruction){.name = "INX", .addressing = IMP, .opcode = INX, .cycles = 2};
+    instruction[0xC8] = (Instruction){.name = "INY", .addressing = IMP, .opcode = INY, .cycles = 2};
+    instruction[0x38] = (Instruction){.name = "SEC", .addressing = IMP, .opcode = SEC, .cycles = 2};
+    instruction[0x18] = (Instruction){.name = "CLC", .addressing = IMP, .opcode = CLC, .cycles = 2};
+    instruction[0xD0] = (Instruction){.name = "BNE", .addressing = REL, .opcode = BNE, .cycles = 2};
+    instruction[0xC5] = (Instruction){.name = "CMP", .addressing = ZP0, .opcode = CMP, .cycles = 3};
+    instruction[0xD5] = (Instruction){.name = "CMP", .addressing = ZPX, .opcode = CMP, .cycles = 4};
+    instruction[0xC9] = (Instruction){.name = "CMP", .addressing = IMM, .opcode = CMP, .cycles = 2};
+    instruction[0xD9] = (Instruction){.name = "CMP", .addressing = ABY, .opcode = CMP, .cycles = 4};
+    instruction[0xCD] = (Instruction){.name = "CMP", .addressing = ABS, .opcode = CMP, .cycles = 4};
+    instruction[0xDD] = (Instruction){.name = "CMP", .addressing = ABX, .opcode = CMP, .cycles = 3};
+    instruction[0xE0] = (Instruction){.name = "CPX", .addressing = IMM, .opcode = CPX, .cycles = 2};
+    instruction[0xE4] = (Instruction){.name = "CPX", .addressing = ZP0, .opcode = CPX, .cycles = 3};
+    instruction[0xEC] = (Instruction){.name = "CPX", .addressing = ABS, .opcode = CPX, .cycles = 4};
+    instruction[0xC0] = (Instruction){.name = "CPY", .addressing = IMM, .opcode = CPY, .cycles = 2};
+    instruction[0xC4] = (Instruction){.name = "CPY", .addressing = ZP0, .opcode = CPY, .cycles = 3};
+    instruction[0xCC] = (Instruction){.name = "CPY", .addressing = ABS, .opcode = CPY, .cycles = 4};
 
     log_info("Instructions loaded");
 }
@@ -211,6 +235,14 @@ uint8_t STY(void) {
     return 0;
 }
 
+uint8_t INC(void) {
+    const uint8_t data = CPU_read(cpu.addr_abs) + 1;
+    CPU_write(cpu.addr_abs, data);
+    set_flag(FLAG_Z, data == 0);
+    set_flag(FLAG_N, data & BIT_7);
+    return 0;
+}
+
 uint8_t INX(void) {
     cpu.x++;
     set_flag(FLAG_Z, cpu.x == 0);
@@ -232,6 +264,49 @@ uint8_t SEC(void) {
 
 uint8_t CLC(void) {
     set_flag(FLAG_C, false);
+    return 0;
+}
+
+uint8_t BNE(void) {
+    if (get_flag(FLAG_Z) == 0) {
+        //TODO: Return 2 instead of adding cycles?
+        cpu.cycles++;
+        cpu.addr_abs = cpu.pc + cpu.addr_rel;
+
+        // Add additional cycle if we crossed page
+        if ((cpu.addr_abs & 0xFF00) != (cpu.pc & 0xFF00)) {
+            cpu.cycles++;
+        }
+
+        cpu.pc = cpu.addr_abs;
+    }
+    return 0;
+}
+
+uint8_t CMP(void) {
+    const uint16_t data = CPU_read(cpu.addr_abs);
+    const uint16_t result = (uint16_t) cpu.a - data;
+    set_flag(FLAG_C, cpu.a >= data);
+    set_flag(FLAG_Z, (result & 0x00FF) == 0);
+    set_flag(FLAG_N, result & BIT_7);
+    return 0;
+}
+
+uint8_t CPX(void) {
+    const uint16_t data = CPU_read(cpu.addr_abs);
+    const uint16_t result = (uint16_t) cpu.x - data;
+    set_flag(FLAG_C, cpu.x >= data);
+    set_flag(FLAG_Z, (result & 0x00FF) == 0);
+    set_flag(FLAG_N, result & BIT_7);
+    return 0;
+}
+
+uint8_t CPY(void) {
+    const uint16_t data = CPU_read(cpu.addr_abs);
+    const uint16_t result = (uint16_t) cpu.y - data;
+    set_flag(FLAG_C, cpu.y >= data);
+    set_flag(FLAG_Z, (result & 0x00FF) == 0);
+    set_flag(FLAG_N, result & BIT_7);
     return 0;
 }
 
@@ -263,6 +338,30 @@ uint8_t ABS(void) {
     return 0;
 }
 
+uint8_t ABX(void) {
+    const uint16_t lo = CPU_read(cpu.pc++);
+    const uint16_t hi = CPU_read(cpu.pc++);
+    cpu.addr_abs = ((hi << 8) | lo) + cpu.x;
+
+    // If we crossed page boundary we need to return an additional clock cycle
+    if ((cpu.addr_abs & 0xFF00) != (hi << 8)) {
+        return 1;
+    }
+    return 0;
+}
+
+uint8_t ABY(void) {
+    const uint16_t lo = CPU_read(cpu.pc++);
+    const uint16_t hi = CPU_read(cpu.pc++);
+    cpu.addr_abs = ((hi << 8) | lo) + cpu.y;
+
+    // If we crossed page boundary we need to return an additional clock cycle
+    if ((cpu.addr_abs & 0xFF00) != (hi << 8)) {
+        return 1;
+    }
+    return 0;
+}
+
 uint8_t IMP(void) {
     // There could be stuff going on with the accumulator in implied mode
     cpu.curr_opcode = cpu.a;
@@ -281,6 +380,15 @@ uint8_t ZPX(void) {
 
 uint8_t ZPY(void) {
     cpu.addr_abs = (CPU_read(cpu.pc++) + cpu.y) & 0x00FF;
+    return 0;
+}
+
+uint8_t REL(void) {
+    cpu.addr_rel = CPU_read(cpu.pc++);
+
+    if (cpu.addr_rel & BIT_7) {
+        cpu.addr_rel |= 0xFF00;
+    }
     return 0;
 }
 

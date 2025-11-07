@@ -46,3 +46,14 @@ STY $02
 A9 FE 85 00 A6 00 86 01
 A4 01 84 02
 
+Branch test
+----------
+loop:
+INX
+CPX #$0A
+BNE loop
+TXA
+
+E8 E0 0A D0 FB 8A
+
+

@@ -8,7 +8,7 @@ const port = 3000;
 // Load up the emulator with a stupid program
 const reset = function() {
     emulator.cpu_init();
-    const rom = "A9 FE 85 00 A6 00 86 01 A4 01 84 02";
+    const rom = "E8 E0 0A D0 FB 8A";
     const len = rom.length;
     emulator.load_rom(0x0600, len, rom);
     emulator.disassemble(0x0600, 0x0700);
