@@ -1,0 +1,23 @@
+Description
+-----------
+Test transfer data between registers
+
+ASM
+---
+LDA #10
+STA $0200
+LDX #20
+STX $0201
+LDY #30
+STY $0202
+LDA #0
+TXA
+LDX #0
+TYA
+LDY #0
+TAX
+TAY
+
+Binary
+------
+A9 0A 8D 00 02 A2 14 8E 01 02 A0 1E 8C 02 02 A9 00 8A A2 00 98 A0 00 AA A8

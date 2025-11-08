@@ -1,0 +1,17 @@
+Description
+-----------
+Load and store data in the zero page.
+
+ASM
+---
+LDA #$FE
+STA $00
+LDX $00
+STX $01
+LDY $01
+STY $02
+
+Binary
+------
+A9 FE 85 00 A6 00 86 01
+A4 01 84 02

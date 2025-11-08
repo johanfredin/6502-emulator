@@ -5,63 +5,9 @@
     <title>Leffler 6502</title>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="./index.js"></script>
+    <link rel="stylesheet" href="./style.css">
 </head>
-<style>
-    body {
-        font-family: 'Courier New', monospace;
-        display: flex;
-        gap: 20px;
-        padding: 20px;
-    }
-
-    .panel {
-        flex: 1;
-    }
-
-    .disassembly-line {
-        padding: 2px 5px;
-        margin: 1px 0;
-    }
-
-    .disassembly-line.current {
-        background-color: #ffff00;
-        font-weight: bold;
-    }
-
-    table {
-        border-collapse: collapse;
-    }
-
-    td {
-        padding: 2px 5px;
-        border: 1px solid #ccc;
-    }
-
-    .flags {
-        display: flex;
-        gap: 8px;
-        font-family: monospace;
-        font-weight: bold;
-    }
-
-    .flag {
-        padding: 2px 6px;
-        border: 1px solid #ccc;
-        border-radius: 3px;
-    }
-
-    .flag.set {
-        background-color: #4CAF50;
-        color: white;
-    }
-
-    .flag.clear {
-        background-color: #f0f0f0;
-        color: #999;
-    }
-</style>
-<body x-data="emulator()">
-
+<body x-data="emulator()" @keydown.window="handleKeydown($event)">
 <div class="panel">
     <h1>CPU State</h1>
     <div>
@@ -81,14 +27,15 @@
             <span class="flag" :class="isFlagSet(FLAG_I) ? 'set' : 'clear'">I</span>
             <span class="flag" :class="isFlagSet(FLAG_Z) ? 'set' : 'clear'">Z</span>
             <span class="flag" :class="isFlagSet(FLAG_C) ? 'set' : 'clear'">C</span>
-    </span>
         </div>
-        <p/>
+
+        <p>
+
         <button x-on:click="step()">Step</button>
         <button x-on:click="reset()"> RESET</button>
     </div>
     <h2>Disassembly</h2>
-    <div>
+    <div class="disassembly-container">
         <template x-for="line in disassembly" :key="line.address">
             <div class="disassembly-line"
                  :class="{ 'current': isCurrentLine(line.address) }"
@@ -108,6 +55,20 @@
         <template x-for="row in 16" :key="row">
             <tr>
                 <td><strong><span x-text="hex(memoryPage * 0x100 + (row - 1) * 0x10, 4)"></span></strong></td>
+                <template x-for="col in 16" :key="col">
+                    <td x-text="hex(pageData[(row-1)*16 + (col-1)] ?? 0)"></td>
+                </template>
+            </tr>
+        </template>
+        </tbody>
+    </table>
+
+    <h2>Stack<span x-text="hex(memoryPage)"></span></h2>
+    <table>
+        <tbody>
+        <template x-for="row in 16" :key="row">
+            <tr>
+                <td><strong><span x-text="hex(stackPage * 0x100 + (row - 1) * 0x10, 4)"></span></strong></td>
                 <template x-for="col in 16" :key="col">
                     <td x-text="hex(pageData[(row-1)*16 + (col-1)] ?? 0)"></td>
                 </template>

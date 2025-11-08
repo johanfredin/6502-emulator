@@ -10,7 +10,7 @@
 
 #define CPU_ZERO_PAGE 0x0000
 #define CPU_STACK_PAGE 0x0100
-#define CPU_STACK_START 0xFD
+#define CPU_STACK_PTR_START 0x00FF
 #define CPU_NMI_LO 0xFFFA
 #define CPU_NMI_HI 0xFFFB
 #define CPU_RESET_LO 0xFFFC
@@ -69,6 +69,9 @@ uint8_t BNE(void);
 uint8_t CMP(void);
 uint8_t CPX(void);
 uint8_t CPY(void);
+uint8_t JMP(void);
+uint8_t PHA(void);
+uint8_t PLA(void);
 
 // Addressing modes
 uint8_t IMM(void);
@@ -93,6 +96,5 @@ Instruction *CPU_get_instruction(uint8_t opcode);
 void CPU_tick();
 // Tick to next instruction (e.g cycles==0)
 void CPU_step();
-bool CPU_is_time_for_new_instruction();
 
 #endif //INC_6502_EMULATOR_CPU_H

@@ -64,11 +64,16 @@ void CPU_load_instructions() {
     instruction[0xAA] = (Instruction){.name = "TAX", .addressing = IMP, .opcode = TAX, .cycles = 2};
     instruction[0xA8] = (Instruction){.name = "TAY", .addressing = IMP, .opcode = TAY, .cycles = 2};
     instruction[0x8D] = (Instruction){.name = "STA", .addressing = ABS, .opcode = STA, .cycles = 4};
+    instruction[0x9D] = (Instruction){.name = "STA", .addressing = ABX, .opcode = STA, .cycles = 5};
+    instruction[0x99] = (Instruction){.name = "STA", .addressing = ABY, .opcode = STA, .cycles = 5};
     instruction[0x85] = (Instruction){.name = "STA", .addressing = ZP0, .opcode = STA, .cycles = 3};
-    instruction[0x8E] = (Instruction){.name = "STX", .addressing = ABS, .opcode = STX, .cycles = 4};
+    instruction[0x95] = (Instruction){.name = "STA", .addressing = ZPX, .opcode = STA, .cycles = 4};
     instruction[0x86] = (Instruction){.name = "STX", .addressing = ZP0, .opcode = STX, .cycles = 3};
+    instruction[0x96] = (Instruction){.name = "STX", .addressing = ZPY, .opcode = STX, .cycles = 4};
+    instruction[0x8E] = (Instruction){.name = "STX", .addressing = ABS, .opcode = STX, .cycles = 4};
     instruction[0x8C] = (Instruction){.name = "STY", .addressing = ABS, .opcode = STY, .cycles = 4};
     instruction[0x84] = (Instruction){.name = "STY", .addressing = ZP0, .opcode = STY, .cycles = 3};
+    instruction[0x94] = (Instruction){.name = "STY", .addressing = ZPX, .opcode = STY, .cycles = 4};
     instruction[0xE6] = (Instruction){.name = "INC", .addressing = ZP0, .opcode = INC, .cycles = 5};
     instruction[0xF6] = (Instruction){.name = "INC", .addressing = ZPX, .opcode = INC, .cycles = 6};
     instruction[0xEE] = (Instruction){.name = "INC", .addressing = ABS, .opcode = INC, .cycles = 6};
@@ -90,6 +95,8 @@ void CPU_load_instructions() {
     instruction[0xC0] = (Instruction){.name = "CPY", .addressing = IMM, .opcode = CPY, .cycles = 2};
     instruction[0xC4] = (Instruction){.name = "CPY", .addressing = ZP0, .opcode = CPY, .cycles = 3};
     instruction[0xCC] = (Instruction){.name = "CPY", .addressing = ABS, .opcode = CPY, .cycles = 4};
+    instruction[0x48] = (Instruction){.name = "PHA", .addressing = IMP, .opcode = PHA, .cycles = 3};
+    instruction[0x68] = (Instruction){.name = "PLA", .addressing = IMP, .opcode = PLA, .cycles = 3};
 
     log_info("Instructions loaded");
 }
@@ -112,7 +119,7 @@ void CPU_reset() {
     const uint16_t reset_hi = CPU_read(CPU_RESET_HI);
     const uint16_t pc_start = (reset_hi << 8) | reset_lo;
     cpu.pc = pc_start;
-    cpu.sp = CPU_STACK_START;
+    cpu.sp = CPU_STACK_PTR_START;
 
     // Set interrupt disabled and unused to 1
     cpu.status = 0x00 | FLAG_U;
@@ -155,10 +162,6 @@ void CPU_step() {
 
 Instruction *CPU_get_instruction(uint8_t opcode) {
     return &instruction[opcode];
-}
-
-bool CPU_is_time_for_new_instruction() {
-    return is_new_instruction;
 }
 
 /*
@@ -236,8 +239,8 @@ uint8_t STY(void) {
 }
 
 uint8_t INC(void) {
-    const uint8_t data = CPU_read(cpu.addr_abs) + 1;
-    CPU_write(cpu.addr_abs, data);
+    const uint8_t data = CPU_read(cpu.addr_abs);
+    CPU_write(cpu.addr_abs, data + 1);
     set_flag(FLAG_Z, data == 0);
     set_flag(FLAG_N, data & BIT_7);
     return 0;
@@ -310,6 +313,25 @@ uint8_t CPY(void) {
     return 0;
 }
 
+uint8_t JMP(void) {
+    cpu.pc = cpu.addr_abs;
+    return 0;
+}
+
+uint8_t PHA(void) {
+    CPU_write(CPU_STACK_PAGE + cpu.sp, cpu.a);
+    cpu.sp--;
+    return 0;
+}
+
+uint8_t PLA(void) {
+    cpu.sp++;
+    cpu.a = CPU_read(CPU_STACK_PAGE + cpu.sp);
+    set_flag(FLAG_Z, cpu.a == 0);
+    set_flag(FLAG_N, cpu.a & BIT_7);
+    return 0;
+}
+
 uint8_t NOP(void) {
     return 0;
 }
@@ -317,6 +339,8 @@ uint8_t NOP(void) {
 uint8_t ILL(void) {
     return 0;
 }
+
+
 
 // ==============================================
 // Addressing modes

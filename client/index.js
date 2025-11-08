@@ -2,6 +2,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('emulator', () => ({
         cpu: {},
         memoryPage: 0x00,
+        stackPage: 0x01,
         pageData: [],
         disassembly: [],
         pcToLineIndex: {},
@@ -27,6 +28,20 @@ document.addEventListener('alpine:init', () => {
             return value.toString(16).toUpperCase().padStart(size, '0');
         },
 
+        handleKeydown(event) {
+            switch (event.key) {
+                case 'ArrowRight':
+                case 'n':
+                    this.step();
+                    break;
+                case 'r':
+                    this.reset();
+                    break;
+                default:
+                    break;
+            }
+        },
+
         async reset() {
             await fetch('/reset');
             await this.getCpuState();
@@ -50,6 +65,7 @@ document.addEventListener('alpine:init', () => {
             this.cpu = await cpuRes.json();
             await this.loadPage(this.memoryPage);
         },
+
 
         async loadPage(page) {
             if (isNaN(page)) {

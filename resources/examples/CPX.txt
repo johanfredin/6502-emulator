@@ -1,0 +1,13 @@
+Increment X until it reaches 10
+
+
+ASM:
+----
+loop:
+INX
+CPX #$0A
+BNE loop
+TXA
+
+
+Binary: E8 E0 0A D0 FB 8A

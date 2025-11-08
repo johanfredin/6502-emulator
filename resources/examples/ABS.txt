@@ -1,0 +1,15 @@
+Description
+-----------
+Load and store using absolute addressing.
+
+
+ASM
+---
+LDA #10
+STA $0200
+LDX $0200
+LDY $0200
+
+Binary
+------
+A9 0A 8D 00 02 AE 00 02 AC 00 02

@@ -1,0 +1,71 @@
+body {
+    font-family: 'Courier New', monospace;
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+}
+
+.panel {
+    flex: 1;
+}
+
+.disassembly-line {
+    padding: 2px 5px;
+    margin: 1px 0;
+}
+
+.disassembly-line.current {
+    background-color: #ffff00;
+    font-weight: bold;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+td {
+    padding: 2px 5px;
+    border: 1px solid #ccc;
+}
+
+.flags {
+    display: flex;
+    gap: 8px;
+    font-family: monospace;
+    font-weight: bold;
+}
+
+.flag {
+    padding: 2px 6px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+.flag.set {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.flag.clear {
+    background-color: #f0f0f0;
+    color: #999;
+}
+
+.disassembly-container {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 8px;
+    background-color: #f9f9f9;
+    font-family: monospace;
+}
+
+.disassembly-line {
+    padding: 2px 4px;
+    white-space: pre;
+}
+
+.disassembly-line.current {
+    background-color: #ffeb3b;
+    font-weight: bold;
+}
