@@ -166,7 +166,6 @@ napi_value get_cpu_state(const napi_env env, napi_callback_info info) {
     bind_unsigned_int_field(env, cpu_bind, "addr_rel", cpu->addr_rel);
     bind_unsigned_int_field(env, cpu_bind, "cycles", cpu->cycles);
     bind_unsigned_int_field(env, cpu_bind, "curr_opcode", cpu->curr_opcode);
-    bind_unsigned_int_field(env, cpu_bind, "data_fetched", cpu->data_fetched);
 
     return cpu_bind;
 catch:

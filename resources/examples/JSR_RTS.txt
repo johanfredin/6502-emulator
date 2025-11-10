@@ -1,0 +1,29 @@
+Description:
+------------
+Jump to different subroutines and return from them
+
+
+ASM
+---
+  JSR init
+  JSR loop
+  JSR end
+
+init:
+  LDY #$10
+  RTS
+
+loop:
+  INX
+  CPX #$05
+  BNE loop
+  RTS
+
+end:
+  LDA #$FF
+
+
+Binary:
+-------
+20 09 06 20 0C 06 20 12 06 A0 10 60 E8 E0 05 D0 FB 60 A9 FF
+

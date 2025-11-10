@@ -5,8 +5,8 @@ Push and pop from the stack
 
 ASM
 ---
-  LDX #$00
-  LDY #$00
+LDX #$00
+LDY #$00
 firstloop:
   TXA
   STA $0200,Y

@@ -10,7 +10,7 @@
 
 #define CPU_ZERO_PAGE 0x0000
 #define CPU_STACK_PAGE 0x0100
-#define CPU_STACK_PTR_START 0x00FF
+#define CPU_STACK_PTR_START 0x00FD
 #define CPU_NMI_LO 0xFFFA
 #define CPU_NMI_HI 0xFFFB
 #define CPU_RESET_LO 0xFFFC
@@ -28,14 +28,11 @@ typedef struct mos6502 {
     uint8_t a;
     uint8_t x;
     uint8_t y;
-
-    uint16_t pc;
     uint8_t sp;
     uint8_t status;
-    uint8_t data_fetched;
+    uint16_t pc;
     uint16_t addr_abs;
     uint16_t addr_rel;
-
     uint8_t curr_opcode;
     uint8_t cycles;
 } CPU;
@@ -72,6 +69,8 @@ uint8_t CPY(void);
 uint8_t JMP(void);
 uint8_t PHA(void);
 uint8_t PLA(void);
+uint8_t JSR(void);
+uint8_t RTS(void);
 
 // Addressing modes
 uint8_t IMM(void);

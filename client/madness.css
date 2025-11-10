@@ -1,0 +1,326 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Courier New', monospace;
+    background: linear-gradient(to bottom, #0a0e27 0%, #1a1a2e 100%);
+    color: #00ff00;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #000;
+    border: 3px solid #00ff00;
+    box-shadow: 0 0 20px #00ff00;
+}
+
+.header h1 {
+    font-family: 'Press Start 2P', 'Courier New', monospace;
+    font-size: 24px;
+    color: #00ff00;
+    text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+    margin-bottom: 15px;
+    letter-spacing: 2px;
+}
+
+.controls {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.panel {
+    background: #000;
+    border: 3px solid #00ff00;
+    padding: 15px;
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+    position: relative;
+}
+
+.panel-title {
+    font-size: 16px;
+    color: #00ff00;
+    margin-bottom: 15px;
+    text-align: center;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.subsection-title {
+    font-size: 12px;
+    color: #00ffff;
+    margin: 15px 0 10px 0;
+    text-align: center;
+}
+
+/* CPU State - Line by Line */
+.cpu-state {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.cpu-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 15px;
+    background: #001a00;
+    border-bottom: 1px solid #004400;
+}
+
+.cpu-line:first-child {
+    border-top: 1px solid #004400;
+}
+
+.cpu-label {
+    color: #00ffff;
+    font-weight: bold;
+    font-size: 14px;
+    min-width: 40px;
+}
+
+.cpu-value {
+    color: #ffff00;
+    font-weight: bold;
+    font-size: 16px;
+    background: #000;
+    padding: 4px 12px;
+    border: 1px solid #ffff00;
+    min-width: 60px;
+    text-align: center;
+}
+
+/* Registers (remove old styles) */
+.registers {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.register-row {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 8px;
+    background: #001a00;
+    border: 1px solid #00ff00;
+}
+
+.register-label {
+    color: #00ffff;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.register-value {
+    color: #ffff00;
+    font-weight: bold;
+    font-size: 16px;
+    background: #000;
+    padding: 4px 8px;
+    border: 1px solid #ffff00;
+    min-width: 50px;
+    text-align: center;
+}
+
+/* Flags */
+.flags {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.flag {
+    padding: 8px 12px;
+    border: 2px solid;
+    font-weight: bold;
+    font-size: 14px;
+    min-width: 35px;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.flag.set {
+    background-color: #00ff00;
+    color: #000;
+    border-color: #00ff00;
+    box-shadow: 0 0 10px #00ff00;
+}
+
+.flag.clear {
+    background-color: #002200;
+    color: #006600;
+    border-color: #004400;
+}
+
+/* Buttons */
+.btn {
+    background: #000;
+    color: #00ff00;
+    border: 2px solid #00ff00;
+    padding: 10px 20px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+}
+
+.btn:hover {
+    background: #00ff00;
+    color: #000;
+    box-shadow: 0 0 15px #00ff00;
+}
+
+.btn:active {
+    transform: scale(0.95);
+}
+
+.btn-danger {
+    color: #ff0000;
+    border-color: #ff0000;
+}
+
+.btn-danger:hover {
+    background: #ff0000;
+    color: #000;
+    box-shadow: 0 0 15px #ff0000;
+}
+
+.btn-small {
+    background: #000;
+    color: #00ff00;
+    border: 2px solid #00ff00;
+    padding: 5px 15px;
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-small:hover {
+    background: #00ff00;
+    color: #000;
+}
+
+.memory-controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+/* Disassembly */
+.disassembly-container {
+    max-height: 400px;
+    overflow-y: scroll;
+    background: #001a00;
+    border: 2px solid #004400;
+    padding: 10px;
+    font-family: 'Courier New', monospace;
+}
+
+.disassembly-container::-webkit-scrollbar {
+    width: 12px;
+}
+
+.disassembly-container::-webkit-scrollbar-track {
+    background: #000;
+    border: 1px solid #00ff00;
+}
+
+.disassembly-container::-webkit-scrollbar-thumb {
+    background: #00ff00;
+    border: 1px solid #000;
+}
+
+.disassembly-line {
+    padding: 4px 8px;
+    white-space: pre;
+    font-size: 13px;
+    color: #00ff00;
+}
+
+.disassembly-line.current {
+    background-color: #ffff00;
+    color: #000;
+    font-weight: bold;
+    box-shadow: 0 0 10px #ffff00;
+}
+
+/* Memory Tables */
+.memory-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.addr-cell {
+    color: #00ffff;
+    font-weight: bold;
+    padding: 4px 8px;
+    border: 1px solid #004444;
+    background: #001a1a;
+    text-align: right;
+}
+
+.data-cell {
+    color: #00ff00;
+    padding: 4px 6px;
+    border: 1px solid #004400;
+    background: #001a00;
+    text-align: center;
+    font-family: 'Courier New', monospace;
+    transition: all 0.2s;
+}
+
+.data-cell:hover {
+    background: #003300;
+    box-shadow: 0 0 5px #00ff00;
+}
+
+.stack-pointer {
+    background: #ff00ff !important;
+    color: #000 !important;
+    font-weight: bold;
+    box-shadow: 0 0 10px #ff00ff;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .container {
+        grid-template-columns: 1fr;
+    }
+
+    .header h1 {
+        font-size: 16px;
+    }
+}

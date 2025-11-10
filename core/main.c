@@ -6,12 +6,21 @@ int main(void) {
     Bus_init();
     CPU_load_instructions();
 
-    char program[] = "a2 00 a0 00 8a 99 00 02 48 e8 c8 c0 10 d0 f5 68 99 00 02 c8 c0 20 d0 f7";
+    char program[] = "20 09 06 20 0C 06 20 12 06 A0 10 60 E8 E0 05 D0 FB 60 A9 FF";
     Bus_load_rom(0x0600, program);
     CPU_reset();
 
     // Dump code
     Disassembler_parse_binary(0x0600, 0x0700);
+    CPU_step();
+    CPU_step();
+    CPU_step();
+    CPU_step();
+    CPU_step();
+    CPU_step();
+    CPU_step();
+    CPU_step();
+    CPU_step();
     CPU_step();
     CPU_step();
     CPU_step();
