@@ -8,18 +8,8 @@ const port = 3000;
 // Load up the emulator with a stupid program
 const reset = function() {
     emulator.cpu_init();
-    const rom = "20 09 06 20 0C 06 20 12 06 A0 10 60 E8 E0 05 D0 FB 60 A9 FF";
-    const len = rom.length;
-    emulator.load_rom(0x0600, len, rom);
-    emulator.disassemble(0x0600, 0x0700);
     emulator.cpu_reset();
 }
-
-// Init on startup
-reset();
-
-// Serve static files
-app.use(express.static(path.join(__dirname)));
 
 // Expose emulator endpoints -----
 app.get('/cpu', (req, res) => {
@@ -49,6 +39,27 @@ app.get('/disassembly', (req, res) => {
     return res.json(disassembly);
 })
 
+app.post('/loadRom', express.text({ type: '*/*' }), (req, res) => {
+    // Clear bus and cpu state
+    emulator.cpu_init();
+
+    const rom = req.body;
+    const len = rom.length;
+    emulator.load_rom(0x0600, len, rom);
+    emulator.disassemble(0x0600, 0x0700);
+
+    // Call reset again to load the program into memory
+    emulator.cpu_reset();
+
+    return res.status(200).send();
+});
+
+// Init on startup
+reset();
+
+// Serve static files
+app.use(express.static(path.join(__dirname)));
+app.use(express.text({ type: 'text/plain' }))
 app.listen(port, () => console.log(`Server running on port ${port}`));
 
 

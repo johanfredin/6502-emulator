@@ -4,11 +4,21 @@
     <meta charset="UTF-8">
     <title>Leffler 6502</title>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="./programs.js"></script>
     <script src="./index.js"></script>
     <link rel="stylesheet" href="./style.css">
 </head>
 <body x-data="emulator()" @keydown.window="handleKeydown($event)">
 <div class="panel">
+    <label for="program-list">Load Program</label>
+    <select id="program-list" x-model="loadedProgramName" @change="loadProgram()">
+        <template x-for="program in programs" :key="program.name">
+            <option :value="program.name" x-text="program.name"></option>
+        </template>
+    </select>
+    <p x-text="getProgramDescription()">
+    </p>
+
     <h1>CPU State</h1>
     <div>
         <p>A: <span x-text="hex(cpu.a)"></span></p>
@@ -56,7 +66,10 @@
             <tr>
                 <td><strong><span x-text="hex(memoryPage * 0x100 + (row - 1) * 0x10, 4)"></span></strong></td>
                 <template x-for="col in 16" :key="col">
-                    <td x-text="hex(pageData[(row-1)*16 + (col-1)] ?? 0)"></td>
+                    <td
+                            x-text="hex(pageData[(row-1)*16 + (col-1)] ?? 0)"
+                            :data-nonzero="(pageData[(row-1)*16 + (col-1)] ?? 0) !== 0"
+                    ></td>
                 </template>
             </tr>
         </template>
@@ -70,7 +83,10 @@
             <tr>
                 <td><strong><span x-text="hex(stackPage * 0x100 + (row - 1) * 0x10, 4)"></span></strong></td>
                 <template x-for="col in 16" :key="col">
-                    <td x-text="hex(pageData[(row-1)*16 + (col-1)] ?? 0)"></td>
+                    <td
+                            x-text="hex(stackData[(row-1)*16 + (col-1)] ?? 0)"
+                            :data-nonzero="(stackData[(row-1)*16 + (col-1)] ?? 0) !== 0"
+                    ></td>
                 </template>
             </tr>
         </template>

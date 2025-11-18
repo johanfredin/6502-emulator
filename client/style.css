@@ -1,71 +1,179 @@
+/* ===== 8-bit Blue BASIC Theme ===== */
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
 body {
-    font-family: 'Courier New', monospace;
+    font-family: "Press Start 2P", monospace;
+    background: #1b2bff;             /* primary C64-like blue */
+    color: #c7d7ff;
     display: flex;
     gap: 20px;
     padding: 20px;
+    font-size: 12px;
 }
+
+/* Panels */
 
 .panel {
     flex: 1;
+    background: #0f1aee;             /* deep blue */
+    padding: 15px;
+    border: 3px solid #4f6aff;
+    border-radius: 4px;
+    box-shadow: 0 0 12px #0d14cc inset;
 }
 
-.disassembly-line {
-    padding: 2px 5px;
-    margin: 1px 0;
+/* Headers */
+
+h1, h2, h3 {
+    color: #ffffff;
+    text-shadow: 0px 0px 4px #a0b7ff;
+    margin-bottom: 10px;
 }
 
-.disassembly-line.current {
-    background-color: #ffff00;
-    font-weight: bold;
+/* Buttons */
+
+button {
+    background: #1624d1;
+    color: #ffffff;
+    border: 2px solid #6d83ff;
+    padding: 4px 10px;
+    cursor: pointer;
+    border-radius: 2px;
 }
 
-table {
-    border-collapse: collapse;
+button:hover {
+    background: #2636ff;
+    border-color: #9fb2ff;
 }
 
-td {
-    padding: 2px 5px;
-    border: 1px solid #ccc;
-}
-
-.flags {
-    display: flex;
-    gap: 8px;
-    font-family: monospace;
-    font-weight: bold;
-}
-
-.flag {
-    padding: 2px 6px;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-}
-
-.flag.set {
-    background-color: #4CAF50;
-    color: white;
-}
-
-.flag.clear {
-    background-color: #f0f0f0;
-    color: #999;
-}
+/* Disassembly area */
 
 .disassembly-container {
     max-height: 400px;
     overflow-y: auto;
-    border: 1px solid #ccc;
+    border: 2px solid #4f6aff;
+    background: #0b13b5;
+    box-shadow: 0 0 6px #101cff inset;
     padding: 8px;
-    background-color: #f9f9f9;
-    font-family: monospace;
 }
 
 .disassembly-line {
-    padding: 2px 4px;
     white-space: pre;
+    padding: 2px 4px;
 }
 
 .disassembly-line.current {
-    background-color: #ffeb3b;
-    font-weight: bold;
+    background: #6980ff;
+    color: #000000;
+}
+
+/* Memory Tables */
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 10px;
+}
+
+td {
+    padding: 3px 6px;
+    border: 1px solid #364cff;
+    background: #0f1aee;
+    color: #c7d7ff;
+    text-align: center;
+}
+
+/* Light up non-zero memory */
+td[data-nonzero="true"] {
+    background: #1829ff;               /* bright but not too aggressive */
+    color: #ffffff;
+    text-shadow: 0 0 3px #b6c7ff;
+    border-color: #2a39ff;
+}
+
+/* Address column highlight */
+
+td strong {
+    color: #ffffff;
+}
+
+/* Flags */
+
+.flags {
+    display: flex;
+    gap: 8px;
+    margin: 8px 0;
+}
+
+.flag {
+    padding: 2px 6px;
+    border: 2px solid #4f6aff;
+    border-radius: 3px;
+    background: #0b13b5;
+    color: #c7d7ff;
+}
+
+.flag.set {
+    background: #4f6aff;
+    color: #000000;
+}
+
+.flag.clear {
+    opacity: 0.4;
+}
+
+/* Scrollbar */
+
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #0b13b5;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #3247ff;
+    border: 1px solid #4f6aff;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #5166ff;
+}
+
+/* Retro Select (compact, native dropdown on open) */
+
+select {
+    font-family: "Press Start 2P", monospace;
+    font-size: 12px;
+    background: #1624d1;
+    color: #ffffff;
+    border: 2px solid #6d83ff;
+    padding: 4px 6px;
+    border-radius: 2px;
+    cursor: pointer;
+
+    width: auto;              /* not full panel */
+    display: inline-block;    /* shrink to content */
+    min-width: 150px;         /* readable size */
+
+    appearance: auto;         /* allow native dropdown when opened */
+    outline: none;
+
+    text-transform: uppercase;
+}
+
+/* Still style the closed select */
+
+select:hover,
+select:focus {
+    background: #2636ff;
+    border-color: #9fb2ff;
+}
+
+/* Optional: match option background on some browsers */
+select option {
+    background: #0f1aee;
+    color: #ffffff;
 }

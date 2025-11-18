@@ -4,8 +4,10 @@ document.addEventListener('alpine:init', () => {
         memoryPage: 0x00,
         stackPage: 0x01,
         pageData: [],
+        stackData: [],
         disassembly: [],
         pcToLineIndex: {},
+        loadedProgramName: null,
 
         // status bitmasks
         FLAG_C: (1 << 0),
@@ -17,6 +19,12 @@ document.addEventListener('alpine:init', () => {
         FLAG_V: (1 << 6),
         FLAG_N: (1 << 7),
 
+        // Called on startup by alpine
+        async init() {
+            await this.getCpuState();
+            await this.loadPage(this.memoryPage);
+        },
+
         isFlagSet(flag) {
             return (this.cpu.status & flag) ? 1 : 0;
         },
@@ -26,6 +34,13 @@ document.addEventListener('alpine:init', () => {
                 value = 0;
             }
             return value.toString(16).toUpperCase().padStart(size, '0');
+        },
+
+        getProgramDescription() {
+            if (!this.loadedProgramName) {
+                return "No program loaded";
+            }
+            return programs.find(p => p.name === this.loadedProgramName).description;
         },
 
         handleKeydown(event) {
@@ -43,16 +58,13 @@ document.addEventListener('alpine:init', () => {
         },
 
         async reset() {
-            await fetch('/reset');
-            await this.getCpuState();
-            await this.loadPage(this.memoryPage);
-            await this.loadDisassembly();
-        },
-
-        async init() {
-            await this.getCpuState();
-            await this.loadPage(this.memoryPage);
-            await this.loadDisassembly();
+            if (this.loadedProgramName) {
+                await this.loadProgram();
+            } else {
+                this.memoryPage = 0x00;
+                await fetch('/reset');
+                await this.getCpuState();
+            }
         },
 
         async getCpuState() {
@@ -60,12 +72,27 @@ document.addEventListener('alpine:init', () => {
             this.cpu = await res.json();
         },
 
+        async loadProgram() {
+            this.memoryPage = 0x00;
+            const program = programs.find(p => p.name === this.loadedProgramName);
+            const rom = program.binary.toString();
+            await fetch('/loadRom', {
+                method: 'POST',
+                body: rom,
+                headers: { 'Content-Type': 'text/plain' }
+            });
+            await this.getCpuState();
+            await this.loadDisassembly();
+            await this.loadPage(this.memoryPage);
+            await this.loadStackPage();
+        },
+
         async step() {
             const cpuRes = await fetch('/step');
             this.cpu = await cpuRes.json();
             await this.loadPage(this.memoryPage);
+            await this.loadStackPage();
         },
-
 
         async loadPage(page) {
             if (isNaN(page)) {
@@ -81,6 +108,12 @@ document.addEventListener('alpine:init', () => {
             const res = await fetch('/memory/' + page);
             const buffer = await res.arrayBuffer();
             this.pageData = new Uint8Array(buffer);
+        },
+
+        async loadStackPage() {
+            const res = await fetch('/memory/' + this.stackPage);
+            const buffer = await res.arrayBuffer();
+            this.stackData = new Uint8Array(buffer);
         },
 
         async loadDisassembly() {
