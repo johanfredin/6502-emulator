@@ -34,8 +34,5 @@ int main(void) {
     CPU_step();
     CPU_step();
     CPU_step();
-
-
-
     return 0;
 }

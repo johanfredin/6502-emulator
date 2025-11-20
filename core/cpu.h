@@ -63,6 +63,8 @@ uint8_t INC(void);
 uint8_t INX(void);
 uint8_t INY(void);
 uint8_t BNE(void);
+uint8_t BCS(void);
+uint8_t BCC(void);
 uint8_t CMP(void);
 uint8_t CPX(void);
 uint8_t CPY(void);
@@ -71,6 +73,7 @@ uint8_t PHA(void);
 uint8_t PLA(void);
 uint8_t JSR(void);
 uint8_t RTS(void);
+uint8_t ADC(void);
 
 // Addressing modes
 uint8_t IMM(void);

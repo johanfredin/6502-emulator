@@ -12,6 +12,7 @@
 <div class="panel">
     <label for="program-list">Load Program</label>
     <select id="program-list" x-model="loadedProgramName" @change="loadProgram()">
+        <option value="">Select a program</option>
         <template x-for="program in programs" :key="program.name">
             <option :value="program.name" x-text="program.name"></option>
         </template>

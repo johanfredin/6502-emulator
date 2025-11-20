@@ -45,8 +45,7 @@ document.addEventListener('alpine:init', () => {
 
         handleKeydown(event) {
             switch (event.key) {
-                case 'ArrowRight':
-                case 'n':
+                case 's':
                     this.step();
                     break;
                 case 'r':

@@ -82,6 +82,8 @@ void CPU_load_instructions() {
     instructions[0x38] = (Instruction){.name = "SEC", .addressing = IMP, .opcode = SEC, .cycles = 2};
     instructions[0x18] = (Instruction){.name = "CLC", .addressing = IMP, .opcode = CLC, .cycles = 2};
     instructions[0xD0] = (Instruction){.name = "BNE", .addressing = REL, .opcode = BNE, .cycles = 2};
+    instructions[0xB0] = (Instruction){.name = "BCS", .addressing = REL, .opcode = BCS, .cycles = 2};
+    instructions[0x90] = (Instruction){.name = "BCC", .addressing = REL, .opcode = BCC, .cycles = 2};
     instructions[0xC5] = (Instruction){.name = "CMP", .addressing = ZP0, .opcode = CMP, .cycles = 3};
     instructions[0xD5] = (Instruction){.name = "CMP", .addressing = ZPX, .opcode = CMP, .cycles = 4};
     instructions[0xC9] = (Instruction){.name = "CMP", .addressing = IMM, .opcode = CMP, .cycles = 2};
@@ -98,6 +100,12 @@ void CPU_load_instructions() {
     instructions[0x68] = (Instruction){.name = "PLA", .addressing = IMP, .opcode = PLA, .cycles = 3};
     instructions[0x20] = (Instruction){.name = "JSR", .addressing = ABS, .opcode = JSR, .cycles = 6};
     instructions[0x60] = (Instruction){.name = "RTS", .addressing = IMP, .opcode = RTS, .cycles = 2};
+    instructions[0x65] = (Instruction){.name = "ADC", .addressing = ZP0, .opcode = ADC, .cycles = 3};
+    instructions[0x75] = (Instruction){.name = "ADC", .addressing = ZPX, .opcode = ADC, .cycles = 4};
+    instructions[0x69] = (Instruction){.name = "ADC", .addressing = IMM, .opcode = ADC, .cycles = 2};
+    instructions[0x79] = (Instruction){.name = "ADC", .addressing = ABY, .opcode = ADC, .cycles = 4};
+    instructions[0x6D] = (Instruction){.name = "ADC", .addressing = ABS, .opcode = ADC, .cycles = 4};
+    instructions[0x7D] = (Instruction){.name = "ADC", .addressing = ABX, .opcode = ADC, .cycles = 4};
 
     log_info("Instructions loaded");
 }
@@ -267,9 +275,8 @@ uint8_t CLC(void) {
     return 0;
 }
 
-uint8_t BNE(void) {
-    if (get_flag(FLAG_Z) == 0) {
-        //TODO: Return 2 instead of adding cycles?
+static inline void branch_on_condition(bool condition) {
+    if (condition) {
         cpu.cycles++;
         cpu.addr_abs = cpu.pc + cpu.addr_rel;
 
@@ -280,6 +287,20 @@ uint8_t BNE(void) {
 
         cpu.pc = cpu.addr_abs;
     }
+}
+
+uint8_t BNE(void) {
+    branch_on_condition(get_flag(FLAG_Z) == 0);
+    return 0;
+}
+
+uint8_t BCS(void) {
+    branch_on_condition(get_flag(FLAG_C) == 1);
+    return 0;
+}
+
+uint8_t BCC(void) {
+    branch_on_condition(get_flag(FLAG_C) == 0);
     return 0;
 }
 
@@ -327,6 +348,30 @@ uint8_t PLA(void) {
     set_flag(FLAG_Z, cpu.a == 0);
     set_flag(FLAG_N, cpu.a & BIT_7);
     return 0;
+}
+
+uint8_t ADC(void) {
+    const uint16_t data = CPU_read(cpu.addr_abs);
+    const uint16_t a = cpu.a;
+    const uint16_t carry = get_flag(FLAG_C);
+
+    // Store result as 16 bit since we need the carry flag
+    const uint16_t result = a + data + carry;
+
+    // set carry, zero and negative flags
+    set_flag(FLAG_C, result > 0xFF);
+    set_flag(FLAG_Z, (result & 0x00FF) == 0);
+    set_flag(FLAG_N, result & 0x80);
+
+    // check if we overflowed
+    const bool v = (~(a ^data) & (a ^ result)) & 0x0080;
+    set_flag(FLAG_V, v);
+
+    // Convert back to 8-bit and add to accumulator
+    cpu.a = result & 0x00FF;
+
+    // May require an additional cycle
+    return 1;
 }
 
 /**

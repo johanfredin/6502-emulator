@@ -109,5 +109,61 @@ programs = [
             "STY $02"
         ],
         binary: "A9 FE 85 00 A6 00 86 01 A4 01 84 02"
+    },
+    {
+        name: "ADC",
+        description: "Addition with different addressing modes, endless loop",
+        asm: [
+            "*=$600",
+            "start:",
+            "LDX #$20",
+            "LDY #$30",
+            "STX $01",
+            "STX $00",
+            "STY $02",
+            "LDX #$01",
+            "LDY #$02",
+            "CLC",
+            "addition_imm:",
+            "ADC #$80",
+            "BCC addition_imm",
+            "CLC",
+            "LDA #$0",
+            "addition_zp:",
+            "ADC $00",
+            "BCC addition_zp",
+            "CLC",
+            "LDA #$0",
+            "addition_zpx:",
+            "ADC $00,X",
+            "BCC addition_zpx",
+            "CLC",
+            "LDA #$0",
+            "LDA #$32",
+            "STA $200",
+            "LDA #$0",
+            "addition_abs:",
+            "ADC $200",
+            "BCC addition_abs",
+            "CLC",
+            "LDA #$15",
+            "STA $201",
+            "LDA #$0",
+            "addition_abx:",
+            "ADC $200,X",
+            "BCC addition_abx",
+            "CLC",
+            "SEC",
+            "BCS start"
+        ],
+        binary: "A2 20 A0 30 86 01 86 00 " +
+            "84 02 A2 01 A0 02 18 69 " +
+            "80 90 FC 18 A9 00 65 00 " +
+            "90 FC 18 A9 00 75 00 90 " +
+            "FC 18 A9 00 A9 32 8D 00 " +
+            "02 A9 00 6D 00 02 90 FB " +
+            "18 A9 15 8D 01 02 A9 00 " +
+            "7D 00 02 90 FB 18 38 B0 " +
+            "BF"
     }
 ];
