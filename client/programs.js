@@ -165,5 +165,16 @@ programs = [
             "18 A9 15 8D 01 02 A9 00 " +
             "7D 00 02 90 FB 18 38 B0 " +
             "BF"
+    },
+    {
+        name: "SBC",
+        description: "Subract from A until 0",
+        asm: ["WIP"],
+        binary: "A9 0F A2 01 86 00 86 01 " +
+            "8E 00 02 8E 01 02 A0 02 " +
+            "8C 02 02 38 E9 01 E5 00 " +
+            "F5 00 ED 00 02 FD 00 02 " +
+            "F9 00 02 C9 00 F0 EC A9 " +
+            "FF"
     }
 ];

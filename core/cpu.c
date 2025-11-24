@@ -19,8 +19,6 @@
 #define FLAG_V (1 << 6)
 #define FLAG_N (1 << 7)
 
-#define BIT_7 (1<<7)
-
 // =========================================================
 // Type definitions
 // =========================================================
@@ -84,6 +82,7 @@ void CPU_load_instructions() {
     instructions[0xD0] = (Instruction){.name = "BNE", .addressing = REL, .opcode = BNE, .cycles = 2};
     instructions[0xB0] = (Instruction){.name = "BCS", .addressing = REL, .opcode = BCS, .cycles = 2};
     instructions[0x90] = (Instruction){.name = "BCC", .addressing = REL, .opcode = BCC, .cycles = 2};
+    instructions[0xF0] = (Instruction){.name = "BEQ", .addressing = REL, .opcode = BEQ, .cycles = 2};
     instructions[0xC5] = (Instruction){.name = "CMP", .addressing = ZP0, .opcode = CMP, .cycles = 3};
     instructions[0xD5] = (Instruction){.name = "CMP", .addressing = ZPX, .opcode = CMP, .cycles = 4};
     instructions[0xC9] = (Instruction){.name = "CMP", .addressing = IMM, .opcode = CMP, .cycles = 2};
@@ -106,6 +105,27 @@ void CPU_load_instructions() {
     instructions[0x79] = (Instruction){.name = "ADC", .addressing = ABY, .opcode = ADC, .cycles = 4};
     instructions[0x6D] = (Instruction){.name = "ADC", .addressing = ABS, .opcode = ADC, .cycles = 4};
     instructions[0x7D] = (Instruction){.name = "ADC", .addressing = ABX, .opcode = ADC, .cycles = 4};
+    instructions[0xE5] = (Instruction){.name = "SBC", .addressing = ZP0, .opcode = SBC, .cycles = 3};
+    instructions[0xF5] = (Instruction){.name = "SBC", .addressing = ZPX, .opcode = SBC, .cycles = 4};
+    instructions[0xE9] = (Instruction){.name = "SBC", .addressing = IMM, .opcode = SBC, .cycles = 2};
+    instructions[0xF9] = (Instruction){.name = "SBC", .addressing = ABY, .opcode = SBC, .cycles = 4};
+    instructions[0xED] = (Instruction){.name = "SBC", .addressing = ABS, .opcode = SBC, .cycles = 4};
+    instructions[0xFD] = (Instruction){.name = "SBC", .addressing = ABX, .opcode = SBC, .cycles = 4};
+    instructions[0x25] = (Instruction){.name = "AND", .addressing = ZP0, .opcode = AND, .cycles = 3};
+    instructions[0x35] = (Instruction){.name = "AND", .addressing = ZPX, .opcode = AND, .cycles = 4};
+    instructions[0x29] = (Instruction){.name = "AND", .addressing = IMM, .opcode = AND, .cycles = 2};
+    instructions[0x39] = (Instruction){.name = "AND", .addressing = ABY, .opcode = AND, .cycles = 4};
+    instructions[0x2D] = (Instruction){.name = "AND", .addressing = ABS, .opcode = AND, .cycles = 4};
+    instructions[0x3D] = (Instruction){.name = "AND", .addressing = ABX, .opcode = AND, .cycles = 4};
+    instructions[0x06] = (Instruction){.name = "ASL", .addressing = ZP0, .opcode = ASL, .cycles = 5};
+    instructions[0x19] = (Instruction){.name = "ASL", .addressing = ZPX, .opcode = ASL, .cycles = 6};
+    instructions[0x0A] = (Instruction){.name = "ASL", .addressing = IMP, .opcode = ASL, .cycles = 2};
+    instructions[0x0E] = (Instruction){.name = "ASL", .addressing = ABS, .opcode = ASL, .cycles = 6};
+    instructions[0x1E] = (Instruction){.name = "ASL", .addressing = ABX, .opcode = ASL, .cycles = 7};
+    instructions[0x24] = (Instruction){.name = "BIT", .addressing = ZP0, .opcode = BIT, .cycles = 3};
+    instructions[0x2C] = (Instruction){.name = "BIT", .addressing = ABS, .opcode = BIT, .cycles = 4};
+
+
 
     log_info("Instructions loaded");
 }
@@ -179,7 +199,7 @@ uint8_t LDA(void) {
     // Load into accumulator
     cpu.a = CPU_read(cpu.addr_abs);
     set_flag(FLAG_Z, cpu.a == 0);
-    set_flag(FLAG_N, cpu.a & BIT_7);
+    set_flag(FLAG_N, cpu.a & 0x80);
     return 1;
 }
 
@@ -187,7 +207,7 @@ uint8_t LDX(void) {
     // Load into x register
     cpu.x = CPU_read(cpu.addr_abs);
     set_flag(FLAG_Z, cpu.x == 0);
-    set_flag(FLAG_N, cpu.x & BIT_7);
+    set_flag(FLAG_N, cpu.x & 0x80);
     return 1;
 }
 
@@ -195,35 +215,35 @@ uint8_t LDY(void) {
     // Load into y register
     cpu.y = CPU_read(cpu.addr_abs);
     set_flag(FLAG_Z, cpu.y == 0);
-    set_flag(FLAG_N, cpu.y & BIT_7);
+    set_flag(FLAG_N, cpu.y & 0x80);
     return 1;
 }
 
 uint8_t TAX(void) {
     cpu.x = cpu.a;
     set_flag(FLAG_Z, cpu.x == 0);
-    set_flag(FLAG_N, cpu.x & BIT_7);
+    set_flag(FLAG_N, cpu.x & 0x80);
     return 0;
 }
 
 uint8_t TAY(void) {
     cpu.y = cpu.a;
     set_flag(FLAG_Z, cpu.y == 0);
-    set_flag(FLAG_N, cpu.y & BIT_7);
+    set_flag(FLAG_N, cpu.y & 0x80);
     return 0;
 }
 
 uint8_t TXA(void) {
     cpu.a = cpu.x;
     set_flag(FLAG_Z, cpu.a == 0);
-    set_flag(FLAG_N, cpu.a & BIT_7);
+    set_flag(FLAG_N, cpu.a & 0x80);
     return 0;
 }
 
 uint8_t TYA(void) {
     cpu.a = cpu.y;
     set_flag(FLAG_Z, cpu.a == 0);
-    set_flag(FLAG_N, cpu.a & BIT_7);
+    set_flag(FLAG_N, cpu.a & 0x80);
     return 0;
 }
 
@@ -247,21 +267,21 @@ uint8_t INC(void) {
     const uint8_t data = CPU_read(cpu.addr_abs);
     CPU_write(cpu.addr_abs, data + 1);
     set_flag(FLAG_Z, data == 0);
-    set_flag(FLAG_N, data & BIT_7);
+    set_flag(FLAG_N, data & 0x80);
     return 0;
 }
 
 uint8_t INX(void) {
     cpu.x++;
     set_flag(FLAG_Z, cpu.x == 0);
-    set_flag(FLAG_N, cpu.x & BIT_7);
+    set_flag(FLAG_N, cpu.x & 0x80);
     return 0;
 }
 
 uint8_t INY(void) {
     cpu.y++;
     set_flag(FLAG_Z, cpu.y == 0);
-    set_flag(FLAG_N, cpu.y & BIT_7);
+    set_flag(FLAG_N, cpu.y & 0x80);
     return 0;
 }
 
@@ -304,30 +324,31 @@ uint8_t BCC(void) {
     return 0;
 }
 
-uint8_t CMP(void) {
+uint8_t BEQ(void) {
+    branch_on_condition(get_flag(FLAG_Z) == 1);
+    return 0;
+}
+
+static inline void compare_register(const uint8_t reg) {
     const uint16_t data = CPU_read(cpu.addr_abs);
-    const uint16_t result = (uint16_t) cpu.a - data;
+    const uint16_t result = (uint16_t) reg - data;
     set_flag(FLAG_C, cpu.a >= data);
     set_flag(FLAG_Z, (result & 0x00FF) == 0);
-    set_flag(FLAG_N, result & BIT_7);
+    set_flag(FLAG_N, result & 0x80);
+}
+
+uint8_t CMP(void) {
+    compare_register(cpu.a);
     return 0;
 }
 
 uint8_t CPX(void) {
-    const uint16_t data = CPU_read(cpu.addr_abs);
-    const uint16_t result = (uint16_t) cpu.x - data;
-    set_flag(FLAG_C, cpu.x >= data);
-    set_flag(FLAG_Z, (result & 0x00FF) == 0);
-    set_flag(FLAG_N, result & BIT_7);
+    compare_register(cpu.x);
     return 0;
 }
 
 uint8_t CPY(void) {
-    const uint16_t data = CPU_read(cpu.addr_abs);
-    const uint16_t result = (uint16_t) cpu.y - data;
-    set_flag(FLAG_C, cpu.y >= data);
-    set_flag(FLAG_Z, (result & 0x00FF) == 0);
-    set_flag(FLAG_N, result & BIT_7);
+    compare_register(cpu.y);
     return 0;
 }
 
@@ -346,12 +367,17 @@ uint8_t PLA(void) {
     cpu.sp++;
     cpu.a = CPU_read(CPU_STACK_PAGE + cpu.sp);
     set_flag(FLAG_Z, cpu.a == 0);
-    set_flag(FLAG_N, cpu.a & BIT_7);
+    set_flag(FLAG_N, cpu.a & 0x80);
     return 0;
 }
 
-uint8_t ADC(void) {
-    const uint16_t data = CPU_read(cpu.addr_abs);
+/**
+ * Used by both ADC and SBC because we can re-use all the logic except for the data in.
+ * For ADC, data = the next byte read.
+ * For SBC, we read the next byte but invert it to make it negative
+ * @param data data from the bus (negated when used with SBC)
+ */
+static inline void set_add_or_sub_result(const uint16_t data) {
     const uint16_t a = cpu.a;
     const uint16_t carry = get_flag(FLAG_C);
 
@@ -364,14 +390,75 @@ uint8_t ADC(void) {
     set_flag(FLAG_N, result & 0x80);
 
     // check if we overflowed
-    const bool v = (~(a ^data) & (a ^ result)) & 0x0080;
+    const bool v = (~(a ^ data) & (a ^ result)) & 0x0080;
     set_flag(FLAG_V, v);
 
     // Convert back to 8-bit and add to accumulator
     cpu.a = result & 0x00FF;
 
+}
+
+uint8_t ADC(void) {
+    const uint16_t data = CPU_read(cpu.addr_abs);
+    set_add_or_sub_result(data);
     // May require an additional cycle
     return 1;
+}
+
+uint8_t SBC(void) {
+    const uint16_t negate_data = (uint16_t) CPU_read(cpu.addr_abs) ^ 0x00FF;
+    set_add_or_sub_result(negate_data);
+    // May required additional cycle
+    return 1;
+}
+
+uint8_t AND(void) {
+    cpu.a &= CPU_read(cpu.addr_abs);
+    set_flag(FLAG_Z, cpu.a == 0);
+    set_flag(FLAG_N, cpu.a & 0x80);
+    return 0;
+}
+
+uint8_t ASL(void) {
+    uint16_t data = 0;
+    uint16_t res = 0;
+
+    /*
+     * We need to separate the logic here.
+     * If addressing mode = IMP then we do NOT want to read another
+     * byte from memory, but modify the accumulator directly.
+     * If not then we DO want to read the next byte and write it back into memory.
+     */
+    if (CPU_get_instruction(cpu.curr_opcode)->addressing == IMP) {
+        data = cpu.a;
+        res = data << 1;
+        cpu.a = res & 0x00FF;
+    } else {
+        data = CPU_read(cpu.addr_abs);
+        res = data << 1;
+        CPU_write(cpu.addr_abs, res & 0x00FF);
+    }
+
+    set_flag(FLAG_C, res > 0x00FF);
+    set_flag(FLAG_Z, (res & 0x00FF) == 0);
+    set_flag(FLAG_N, res & 0x80);
+    return 0;
+}
+
+uint8_t BIT(void) {
+    /*
+     * Used for setting N and V bits to whatever is in the memory location read.
+     * If bit6 set then set V flag.
+     * If bit7 set then set N flag.
+     * Kind of a poor mans version of SEC/CLC for bit 6 and/or 7 (that's how my brain thinks of them).
+     * Extra confusion caused since flag Z is ACTUALLY set based on a real calculation with A
+     */
+    const uint8_t data = CPU_read(cpu.addr_abs);
+    const uint8_t res = cpu.a & data;
+    set_flag(FLAG_Z, res == 0);
+    set_flag(FLAG_V, data & FLAG_V);
+    set_flag(FLAG_N, data & FLAG_N);
+    return 0;
 }
 
 /**
@@ -408,7 +495,6 @@ uint8_t NOP(void) {
 uint8_t ILL(void) {
     return 0;
 }
-
 
 
 // ==============================================
@@ -479,7 +565,7 @@ uint8_t ZPY(void) {
 uint8_t REL(void) {
     cpu.addr_rel = CPU_read(cpu.pc++);
 
-    if (cpu.addr_rel & BIT_7) {
+    if (cpu.addr_rel & 0x80) {
         cpu.addr_rel |= 0xFF00;
     }
     return 0;
@@ -493,6 +579,3 @@ uint8_t CPU_read(const uint16_t addr) {
 void CPU_write(const uint16_t addr, const uint8_t data) {
     Bus_write(addr, data);
 }
-
-
-
