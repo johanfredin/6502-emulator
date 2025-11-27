@@ -59,4 +59,3 @@ errno=0; return; }
 #define try(A, M, ...) check(A, M, goto catch, ##__VA_ARGS__)
 
 #endif
-

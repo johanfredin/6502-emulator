@@ -3,6 +3,8 @@
 //
 
 #include "cpu.h"
+
+#include <stdbool.h>
 #include <stdio.h>
 #include "bus.h"
 #include "dbg.h"
@@ -25,6 +27,10 @@
 static CPU cpu;
 static Instruction instructions[N_INSTRUCTIONS];
 
+
+// =========================================================
+// Private functions
+// =========================================================
 static void set_flag(const uint8_t flag, const bool b) {
     if (b) {
         cpu.status |= flag;
@@ -37,6 +43,57 @@ static bool get_flag(const uint8_t flag) {
     return cpu.status & flag;
 }
 
+static void compare_register(const uint8_t reg) {
+    const uint16_t data = CPU_read(cpu.addr_abs);
+    const uint16_t result = (uint16_t) reg - data;
+    set_flag(FLAG_C, cpu.a >= data);
+    set_flag(FLAG_Z, (result & 0x00FF) == 0);
+    set_flag(FLAG_N, result & 0x80);
+}
+
+static void branch_on_condition(bool condition) {
+    if (condition) {
+        cpu.cycles++;
+        cpu.addr_abs = cpu.pc + cpu.addr_rel;
+
+        // Add additional cycle if we crossed page
+        if ((cpu.addr_abs & 0xFF00) != (cpu.pc & 0xFF00)) {
+            cpu.cycles++;
+        }
+
+        cpu.pc = cpu.addr_abs;
+    }
+}
+
+/**
+ * Used by both ADC and SBC because we can re-use all the logic except for the data in.
+ * For ADC, data = the next byte read.
+ * For SBC, we read the next byte but invert it to make it negative
+ * @param data data from the bus (negated when used with SBC)
+ */
+static void set_add_or_sub_result(const uint16_t data) {
+    const uint16_t a = cpu.a;
+    const uint16_t carry = get_flag(FLAG_C);
+
+    // Store result as 16 bit since we need the carry flag
+    const uint16_t result = a + data + carry;
+
+    // set carry, zero and negative flags
+    set_flag(FLAG_C, result > 0xFF);
+    set_flag(FLAG_Z, (result & 0x00FF) == 0);
+    set_flag(FLAG_N, result & 0x80);
+
+    // check if we overflowed
+    const bool v = (~(a ^ data) & (a ^ result)) & 0x0080;
+    set_flag(FLAG_V, v);
+
+    // Convert back to 8-bit and add to accumulator
+    cpu.a = result & 0x00FF;
+}
+
+// =========================================================
+// Public functions
+// =========================================================
 void CPU_load_instructions() {
     // Set instructions (fill the ones we have not yet defined as NOP)
     for (int i = 0; i < N_INSTRUCTIONS; i++) {
@@ -83,6 +140,7 @@ void CPU_load_instructions() {
     instructions[0xB0] = (Instruction){.name = "BCS", .addressing = REL, .opcode = BCS, .cycles = 2};
     instructions[0x90] = (Instruction){.name = "BCC", .addressing = REL, .opcode = BCC, .cycles = 2};
     instructions[0xF0] = (Instruction){.name = "BEQ", .addressing = REL, .opcode = BEQ, .cycles = 2};
+    instructions[0x30] = (Instruction){.name = "BMI", .addressing = REL, .opcode = BMI, .cycles = 2};
     instructions[0xC5] = (Instruction){.name = "CMP", .addressing = ZP0, .opcode = CMP, .cycles = 3};
     instructions[0xD5] = (Instruction){.name = "CMP", .addressing = ZPX, .opcode = CMP, .cycles = 4};
     instructions[0xC9] = (Instruction){.name = "CMP", .addressing = IMM, .opcode = CMP, .cycles = 2};
@@ -125,9 +183,15 @@ void CPU_load_instructions() {
     instructions[0x24] = (Instruction){.name = "BIT", .addressing = ZP0, .opcode = BIT, .cycles = 3};
     instructions[0x2C] = (Instruction){.name = "BIT", .addressing = ABS, .opcode = BIT, .cycles = 4};
 
-
-
     log_info("Instructions loaded");
+}
+
+uint8_t CPU_read(const uint16_t addr) {
+    return Bus_read(addr);
+}
+
+void CPU_write(const uint16_t addr, const uint8_t data) {
+    Bus_write(addr, data);
 }
 
 const CPU *CPU_get_state(void) {
@@ -295,20 +359,6 @@ uint8_t CLC(void) {
     return 0;
 }
 
-static inline void branch_on_condition(bool condition) {
-    if (condition) {
-        cpu.cycles++;
-        cpu.addr_abs = cpu.pc + cpu.addr_rel;
-
-        // Add additional cycle if we crossed page
-        if ((cpu.addr_abs & 0xFF00) != (cpu.pc & 0xFF00)) {
-            cpu.cycles++;
-        }
-
-        cpu.pc = cpu.addr_abs;
-    }
-}
-
 uint8_t BNE(void) {
     branch_on_condition(get_flag(FLAG_Z) == 0);
     return 0;
@@ -329,12 +379,9 @@ uint8_t BEQ(void) {
     return 0;
 }
 
-static inline void compare_register(const uint8_t reg) {
-    const uint16_t data = CPU_read(cpu.addr_abs);
-    const uint16_t result = (uint16_t) reg - data;
-    set_flag(FLAG_C, cpu.a >= data);
-    set_flag(FLAG_Z, (result & 0x00FF) == 0);
-    set_flag(FLAG_N, result & 0x80);
+uint8_t BMI(void) {
+    branch_on_condition(get_flag(FLAG_N) == 1);
+    return 0;
 }
 
 uint8_t CMP(void) {
@@ -371,33 +418,6 @@ uint8_t PLA(void) {
     return 0;
 }
 
-/**
- * Used by both ADC and SBC because we can re-use all the logic except for the data in.
- * For ADC, data = the next byte read.
- * For SBC, we read the next byte but invert it to make it negative
- * @param data data from the bus (negated when used with SBC)
- */
-static inline void set_add_or_sub_result(const uint16_t data) {
-    const uint16_t a = cpu.a;
-    const uint16_t carry = get_flag(FLAG_C);
-
-    // Store result as 16 bit since we need the carry flag
-    const uint16_t result = a + data + carry;
-
-    // set carry, zero and negative flags
-    set_flag(FLAG_C, result > 0xFF);
-    set_flag(FLAG_Z, (result & 0x00FF) == 0);
-    set_flag(FLAG_N, result & 0x80);
-
-    // check if we overflowed
-    const bool v = (~(a ^ data) & (a ^ result)) & 0x0080;
-    set_flag(FLAG_V, v);
-
-    // Convert back to 8-bit and add to accumulator
-    cpu.a = result & 0x00FF;
-
-}
-
 uint8_t ADC(void) {
     const uint16_t data = CPU_read(cpu.addr_abs);
     set_add_or_sub_result(data);
@@ -406,8 +426,8 @@ uint8_t ADC(void) {
 }
 
 uint8_t SBC(void) {
-    const uint16_t negate_data = (uint16_t) CPU_read(cpu.addr_abs) ^ 0x00FF;
-    set_add_or_sub_result(negate_data);
+    const uint16_t data = CPU_read(cpu.addr_abs);
+    set_add_or_sub_result(data ^ 0x00FF);
     // May required additional cycle
     return 1;
 }
@@ -429,7 +449,8 @@ uint8_t ASL(void) {
      * byte from memory, but modify the accumulator directly.
      * If not then we DO want to read the next byte and write it back into memory.
      */
-    if (CPU_get_instruction(cpu.curr_opcode)->addressing == IMP) {
+    const addressing_fn addressing_mode = CPU_get_instruction(cpu.curr_opcode)->addressing;
+    if (addressing_mode == IMP) {
         data = cpu.a;
         res = data << 1;
         cpu.a = res & 0x00FF;
@@ -448,8 +469,8 @@ uint8_t ASL(void) {
 uint8_t BIT(void) {
     /*
      * Used for setting N and V bits to whatever is in the memory location read.
-     * If bit6 set then set V flag.
-     * If bit7 set then set N flag.
+     * If bit6 set, then set V flag.
+     * If bit7 set, then set N flag.
      * Kind of a poor mans version of SEC/CLC for bit 6 and/or 7 (that's how my brain thinks of them).
      * Extra confusion caused since flag Z is ACTUALLY set based on a real calculation with A
      */
@@ -469,9 +490,11 @@ uint8_t BIT(void) {
 uint8_t JSR(void) {
     cpu.pc--;
 
-    // Write lo and hi byte of pc to stack
-    CPU_write(CPU_STACK_PAGE + cpu.sp--, (cpu.pc >> 8) & 0x00FF);
-    CPU_write(CPU_STACK_PAGE + cpu.sp--, cpu.pc & 0x00FF);
+    // Push PC hi and lo byte of pc to stack
+    CPU_write(CPU_STACK_PAGE + cpu.sp, (cpu.pc >> 8) & 0x00FF);
+    cpu.sp--;
+    CPU_write(CPU_STACK_PAGE + cpu.sp, cpu.pc & 0x00FF);
+    cpu.sp--;
 
     // set pc to new address
     cpu.pc = cpu.addr_abs;
@@ -480,9 +503,13 @@ uint8_t JSR(void) {
 
 uint8_t RTS(void) {
     cpu.sp++;
+
+    // Pop PC lo and hi byte from the stack
     const uint16_t pc_lo = CPU_read(CPU_STACK_PAGE + cpu.sp);
     cpu.sp++;
     const uint16_t pc_hi = CPU_read(CPU_STACK_PAGE + cpu.sp);
+
+    // Set pc to where it was before entering the subroutine
     cpu.pc = (pc_hi << 8) | (pc_lo & 0x00FF);
     cpu.pc++;
     return 0;
@@ -571,11 +598,3 @@ uint8_t REL(void) {
     return 0;
 }
 
-
-uint8_t CPU_read(const uint16_t addr) {
-    return Bus_read(addr);
-}
-
-void CPU_write(const uint16_t addr, const uint8_t data) {
-    Bus_write(addr, data);
-}

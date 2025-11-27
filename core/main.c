@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "bus.h"
 #include "cpu.h"
 #include "disassembler.h"
@@ -34,5 +36,6 @@ int main(void) {
     CPU_step();
     CPU_step();
     CPU_step();
-    return 0;
+
+    return EXIT_SUCCESS;
 }

@@ -5,7 +5,6 @@
 #ifndef INC_6502_EMULATOR_CPU_H
 #define INC_6502_EMULATOR_CPU_H
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #define CPU_ZERO_PAGE 0x0000
@@ -44,6 +43,18 @@ typedef struct Instruction {
     uint8_t cycles;
 } Instruction;
 
+const CPU *CPU_get_state();
+void CPU_load_instructions();
+void CPU_reset();
+uint8_t CPU_read(uint16_t addr);
+void CPU_write(uint16_t addr, uint8_t data);
+Instruction *CPU_get_instruction(uint8_t opcode);
+
+// Tick one cycle
+void CPU_tick();
+// Tick to next instruction (e.g cycles==0)
+void CPU_step();
+
 // Opcodes
 uint8_t LDA(void);
 uint8_t LDX(void);
@@ -66,6 +77,7 @@ uint8_t BNE(void);
 uint8_t BCS(void);
 uint8_t BCC(void);
 uint8_t BEQ(void);
+uint8_t BMI(void);
 uint8_t CMP(void);
 uint8_t CPX(void);
 uint8_t CPY(void);
@@ -91,17 +103,5 @@ uint8_t ZPX(void);
 uint8_t ZPY(void);
 uint8_t REL(void);
 
-
-const CPU *CPU_get_state();
-void CPU_load_instructions();
-void CPU_reset();
-uint8_t CPU_read(uint16_t addr);
-void CPU_write(uint16_t addr, uint8_t data);
-Instruction *CPU_get_instruction(uint8_t opcode);
-
-// Tick one cycle
-void CPU_tick();
-// Tick to next instruction (e.g cycles==0)
-void CPU_step();
 
 #endif //INC_6502_EMULATOR_CPU_H

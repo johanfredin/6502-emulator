@@ -2,6 +2,7 @@
 // Created by johan on 2025-10-23.
 //
 
+// ReSharper disable CppDFAMemoryLeak because this memory will live during the entire program life-cycle
 #include "disassembler.h"
 
 #include <stdlib.h>
@@ -14,7 +15,7 @@ static SourceCode code;
 void Disassembler_parse_binary(const uint16_t start, const uint16_t end) {
     const uint16_t max_instructions = end - start;
     SourceLine *lines = calloc(max_instructions, sizeof(SourceLine));
-    try(lines, "Failed to allocate memory for disassembly lines");
+    check_mem(lines, exit(EXIT_FAILURE));
     uint16_t n_instructions = 0;
     for (uint16_t addr = start; addr < end;) {
         // Save the start of the current line to accurately print the memory address of instruction
@@ -70,17 +71,15 @@ void Disassembler_parse_binary(const uint16_t start, const uint16_t end) {
 
         lines[n_instructions].address = origin;
         lines[n_instructions].line = strdup(buffer);
-        try(lines[n_instructions].line, "Failed to allocate memory for new line");
+        check_mem(lines[n_instructions].line, {
+            free(lines);
+            exit(EXIT_FAILURE);
+        });
         n_instructions++;
     }
 
     code = (SourceCode){lines, n_instructions};
     log_info("Binary disassembled");
-    return;
-catch:
-    if (lines) {
-        free(lines);
-    }
 }
 
 SourceCode *Disassembler_get_code() {
