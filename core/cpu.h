@@ -7,6 +7,15 @@
 
 #include <stdint.h>
 
+#define FLAG_C (1 << 0)
+#define FLAG_Z (1 << 1)
+#define FLAG_I (1 << 2)
+#define FLAG_D (1 << 3)
+#define FLAG_B (1 << 4)
+#define FLAG_U (1 << 5)
+#define FLAG_V (1 << 6)
+#define FLAG_N (1 << 7)
+
 #define CPU_ZERO_PAGE 0x0000
 #define CPU_STACK_PAGE 0x0100
 #define CPU_STACK_PTR_START 0x00FD
@@ -43,17 +52,19 @@ typedef struct Instruction {
     uint8_t cycles;
 } Instruction;
 
-const CPU *CPU_get_state();
-void CPU_load_instructions();
-void CPU_reset();
+const CPU *CPU_get_state(void);
+void CPU_load_instructions(void);
+void CPU_reset(void);
+void CPU_irq(void);
+void CPU_nmi(void);
 uint8_t CPU_read(uint16_t addr);
 void CPU_write(uint16_t addr, uint8_t data);
 Instruction *CPU_get_instruction(uint8_t opcode);
 
 // Tick one cycle
-void CPU_tick();
+void CPU_tick(void);
 // Tick to next instruction (e.g cycles==0)
-void CPU_step();
+void CPU_step(void);
 
 // Opcodes
 uint8_t LDA(void);
@@ -70,6 +81,8 @@ uint8_t NOP(void);
 uint8_t ILL(void);
 uint8_t SEC(void);
 uint8_t CLC(void);
+uint8_t SEI(void);
+uint8_t CLI(void);
 uint8_t INC(void);
 uint8_t INX(void);
 uint8_t INY(void);
@@ -78,6 +91,8 @@ uint8_t BCS(void);
 uint8_t BCC(void);
 uint8_t BEQ(void);
 uint8_t BMI(void);
+uint8_t BPL(void);
+uint8_t BIT(void);
 uint8_t CMP(void);
 uint8_t CPX(void);
 uint8_t CPY(void);
@@ -86,11 +101,13 @@ uint8_t PHA(void);
 uint8_t PLA(void);
 uint8_t JSR(void);
 uint8_t RTS(void);
+uint8_t RTI(void);
 uint8_t ADC(void);
 uint8_t SBC(void);
 uint8_t AND(void);
 uint8_t ASL(void);
-uint8_t BIT(void);
+uint8_t BRK(void);
+
 
 // Addressing modes
 uint8_t IMM(void);

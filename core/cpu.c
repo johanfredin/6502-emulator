@@ -1,6 +1,9 @@
-//
-// Created by johan on 2025-10-02.
-//
+/**
+ * WIP on the 6502 CPU emulator.
+ * TODO: BRK, irq, nmi and RTS "cheat" in that a copy of status is not sent to stack
+ * TODO: Instead we modify the actual status flag and toggle it back on RTI.
+ * TODO: Fix the actual way of doing it once I ehm...know the actual way :)
+ */
 
 #include "cpu.h"
 
@@ -11,15 +14,6 @@
 #include "disassembler.h"
 
 #define N_INSTRUCTIONS 256
-
-#define FLAG_C (1 << 0)
-#define FLAG_Z (1 << 1)
-#define FLAG_I (1 << 2)
-#define FLAG_D (1 << 3)
-#define FLAG_B (1 << 4)
-#define FLAG_U (1 << 5)
-#define FLAG_V (1 << 6)
-#define FLAG_N (1 << 7)
 
 // =========================================================
 // Type definitions
@@ -39,6 +33,14 @@ static void set_flag(const uint8_t flag, const bool b) {
     }
 }
 
+static void set_flag_to_copy(uint8_t *status_copy, const uint8_t flag, const bool b) {
+    if (b) {
+        *status_copy |= flag;
+    } else {
+        *status_copy &= ~flag;
+    }
+}
+
 static bool get_flag(const uint8_t flag) {
     return cpu.status & flag;
 }
@@ -46,7 +48,7 @@ static bool get_flag(const uint8_t flag) {
 static void compare_register(const uint8_t reg) {
     const uint16_t data = CPU_read(cpu.addr_abs);
     const uint16_t result = (uint16_t) reg - data;
-    set_flag(FLAG_C, cpu.a >= data);
+    set_flag(FLAG_C, reg >= data);
     set_flag(FLAG_Z, (result & 0x00FF) == 0);
     set_flag(FLAG_N, result & 0x80);
 }
@@ -94,13 +96,14 @@ static void set_add_or_sub_result(const uint16_t data) {
 // =========================================================
 // Public functions
 // =========================================================
-void CPU_load_instructions() {
+void CPU_load_instructions(void) {
     // Set instructions (fill the ones we have not yet defined as NOP)
     for (int i = 0; i < N_INSTRUCTIONS; i++) {
         instructions[i] = (Instruction){.name = "NOP", .addressing = IMP, .opcode = NOP, .cycles = 2};
     }
 
     // Set our defined ones
+    instructions[0x00] = (Instruction){.name = "BRK", .addressing = IMP, .opcode = BRK, .cycles = 7};
     instructions[0xA9] = (Instruction){.name = "LDA", .addressing = IMM, .opcode = LDA, .cycles = 2};
     instructions[0xAD] = (Instruction){.name = "LDA", .addressing = ABS, .opcode = LDA, .cycles = 4};
     instructions[0xBD] = (Instruction){.name = "LDA", .addressing = ABX, .opcode = LDA, .cycles = 4};
@@ -135,18 +138,21 @@ void CPU_load_instructions() {
     instructions[0xE8] = (Instruction){.name = "INX", .addressing = IMP, .opcode = INX, .cycles = 2};
     instructions[0xC8] = (Instruction){.name = "INY", .addressing = IMP, .opcode = INY, .cycles = 2};
     instructions[0x38] = (Instruction){.name = "SEC", .addressing = IMP, .opcode = SEC, .cycles = 2};
+    instructions[0x78] = (Instruction){.name = "SEI", .addressing = IMP, .opcode = SEI, .cycles = 2};
+    instructions[0x58] = (Instruction){.name = "CLI", .addressing = IMP, .opcode = CLI, .cycles = 2};
     instructions[0x18] = (Instruction){.name = "CLC", .addressing = IMP, .opcode = CLC, .cycles = 2};
     instructions[0xD0] = (Instruction){.name = "BNE", .addressing = REL, .opcode = BNE, .cycles = 2};
     instructions[0xB0] = (Instruction){.name = "BCS", .addressing = REL, .opcode = BCS, .cycles = 2};
     instructions[0x90] = (Instruction){.name = "BCC", .addressing = REL, .opcode = BCC, .cycles = 2};
     instructions[0xF0] = (Instruction){.name = "BEQ", .addressing = REL, .opcode = BEQ, .cycles = 2};
+    instructions[0x10] = (Instruction){.name = "BPL", .addressing = REL, .opcode = BPL, .cycles = 2};
     instructions[0x30] = (Instruction){.name = "BMI", .addressing = REL, .opcode = BMI, .cycles = 2};
     instructions[0xC5] = (Instruction){.name = "CMP", .addressing = ZP0, .opcode = CMP, .cycles = 3};
     instructions[0xD5] = (Instruction){.name = "CMP", .addressing = ZPX, .opcode = CMP, .cycles = 4};
     instructions[0xC9] = (Instruction){.name = "CMP", .addressing = IMM, .opcode = CMP, .cycles = 2};
     instructions[0xD9] = (Instruction){.name = "CMP", .addressing = ABY, .opcode = CMP, .cycles = 4};
     instructions[0xCD] = (Instruction){.name = "CMP", .addressing = ABS, .opcode = CMP, .cycles = 4};
-    instructions[0xDD] = (Instruction){.name = "CMP", .addressing = ABX, .opcode = CMP, .cycles = 3};
+    instructions[0xDD] = (Instruction){.name = "CMP", .addressing = ABX, .opcode = CMP, .cycles = 4};
     instructions[0xE0] = (Instruction){.name = "CPX", .addressing = IMM, .opcode = CPX, .cycles = 2};
     instructions[0xE4] = (Instruction){.name = "CPX", .addressing = ZP0, .opcode = CPX, .cycles = 3};
     instructions[0xEC] = (Instruction){.name = "CPX", .addressing = ABS, .opcode = CPX, .cycles = 4};
@@ -154,9 +160,10 @@ void CPU_load_instructions() {
     instructions[0xC4] = (Instruction){.name = "CPY", .addressing = ZP0, .opcode = CPY, .cycles = 3};
     instructions[0xCC] = (Instruction){.name = "CPY", .addressing = ABS, .opcode = CPY, .cycles = 4};
     instructions[0x48] = (Instruction){.name = "PHA", .addressing = IMP, .opcode = PHA, .cycles = 3};
-    instructions[0x68] = (Instruction){.name = "PLA", .addressing = IMP, .opcode = PLA, .cycles = 3};
+    instructions[0x68] = (Instruction){.name = "PLA", .addressing = IMP, .opcode = PLA, .cycles = 4};
     instructions[0x20] = (Instruction){.name = "JSR", .addressing = ABS, .opcode = JSR, .cycles = 6};
-    instructions[0x60] = (Instruction){.name = "RTS", .addressing = IMP, .opcode = RTS, .cycles = 2};
+    instructions[0x60] = (Instruction){.name = "RTS", .addressing = IMP, .opcode = RTS, .cycles = 6};
+    instructions[0x40] = (Instruction){.name = "RTI", .addressing = IMP, .opcode = RTI, .cycles = 6};
     instructions[0x65] = (Instruction){.name = "ADC", .addressing = ZP0, .opcode = ADC, .cycles = 3};
     instructions[0x75] = (Instruction){.name = "ADC", .addressing = ZPX, .opcode = ADC, .cycles = 4};
     instructions[0x69] = (Instruction){.name = "ADC", .addressing = IMM, .opcode = ADC, .cycles = 2};
@@ -176,7 +183,7 @@ void CPU_load_instructions() {
     instructions[0x2D] = (Instruction){.name = "AND", .addressing = ABS, .opcode = AND, .cycles = 4};
     instructions[0x3D] = (Instruction){.name = "AND", .addressing = ABX, .opcode = AND, .cycles = 4};
     instructions[0x06] = (Instruction){.name = "ASL", .addressing = ZP0, .opcode = ASL, .cycles = 5};
-    instructions[0x19] = (Instruction){.name = "ASL", .addressing = ZPX, .opcode = ASL, .cycles = 6};
+    instructions[0x16] = (Instruction){.name = "ASL", .addressing = ZPX, .opcode = ASL, .cycles = 6};
     instructions[0x0A] = (Instruction){.name = "ASL", .addressing = IMP, .opcode = ASL, .cycles = 2};
     instructions[0x0E] = (Instruction){.name = "ASL", .addressing = ABS, .opcode = ASL, .cycles = 6};
     instructions[0x1E] = (Instruction){.name = "ASL", .addressing = ABX, .opcode = ASL, .cycles = 7};
@@ -195,12 +202,11 @@ void CPU_write(const uint16_t addr, const uint8_t data) {
 }
 
 const CPU *CPU_get_state(void) {
-    log_info("CPU get state called!");
     return &cpu;
 }
 
 // Emulate cpu start/reset
-void CPU_reset() {
+void CPU_reset(void) {
     cpu.a = 0;
     cpu.x = 0;
     cpu.y = 0;
@@ -226,7 +232,63 @@ void CPU_reset() {
     log_info("CPU started");
 }
 
-void CPU_tick() {
+// Emulate interrupt requests that are only allowed if allowed (I flag == 0)
+void CPU_irq(void) {
+    if (get_flag(FLAG_I) == 1) {
+        // If disable interrupts are set, we are not allowed to run
+        // This most likely because another interrupt is currently running
+        return;
+    }
+
+    // Write hi and lo byte to stack (remember little-endian so reversed since we decrement sp)
+    CPU_write(CPU_STACK_PAGE + cpu.sp--, cpu.pc >> 8);
+    CPU_write(CPU_STACK_PAGE + cpu.sp--, cpu.pc & 0x00FF);
+
+    // Set B and U flag before pushing to stack
+    set_flag(FLAG_B, false);
+    set_flag(FLAG_U, true);
+
+    // Push status register to the stack
+    CPU_write(CPU_STACK_PAGE + cpu.sp--, cpu.status);
+
+    // Set I flag to true after copy (will be restored to 0 in RTI)
+    set_flag(FLAG_I, true);
+
+    // Now set pc to what's been stored in IRQ vector (must load as 16-bit so we can OR them together)
+    const uint16_t irq_lo = CPU_read(CPU_IRQ_LO) & 0x00FF;
+    const uint16_t irq_hi = CPU_read(CPU_IRQ_HI) & 0x00FF;
+    cpu.pc = (irq_hi << 8) | irq_lo;
+
+    // Interrupts takes ~7 cycles
+    cpu.cycles = 7;
+}
+
+// Emulate non-maskable interrupts i.e., They will always run regardless of I flag
+void CPU_nmi(void) {
+    // Write hi and lo byte to stack (remember little-endian so reversed since we decrement sp)
+    CPU_write(CPU_STACK_PAGE + cpu.sp--, cpu.pc >> 8);
+    CPU_write(CPU_STACK_PAGE + cpu.sp--, cpu.pc & 0x00FF);
+
+    // Set B and U flags before pushing
+    set_flag(FLAG_B, false);
+    set_flag(FLAG_U, true);
+
+    // Push status register to the stack
+    CPU_write(CPU_STACK_PAGE + cpu.sp--, cpu.status);
+
+    // Set actual I flag to true after pushing to stack (will be set back to 0 in RTI)
+    set_flag(FLAG_I, true);
+
+    // Now set pc to what's been stored in NMI vector (must load as 16-bit so we can OR them together)
+    const uint16_t nmi_lo = CPU_read(CPU_NMI_LO) & 0x00FF;
+    const uint16_t nmi_hi = CPU_read(CPU_NMI_HI) & 0x00FF;
+    cpu.pc = (nmi_hi << 8) | nmi_lo;
+
+    // NMI takes ~7 cycles
+    cpu.cycles = 7;
+}
+
+void CPU_tick(void) {
     if (cpu.cycles == 0) {
         cpu.curr_opcode = CPU_read(cpu.pc++);
 
@@ -241,7 +303,7 @@ void CPU_tick() {
     cpu.cycles--;
 }
 
-void CPU_step() {
+void CPU_step(void) {
     while (cpu.cycles > 0) {
         CPU_tick();
     }
@@ -249,7 +311,7 @@ void CPU_step() {
     CPU_tick();
 }
 
-Instruction *CPU_get_instruction(uint8_t opcode) {
+Instruction *CPU_get_instruction(const uint8_t opcode) {
     return &instructions[opcode];
 }
 
@@ -328,8 +390,9 @@ uint8_t STY(void) {
 }
 
 uint8_t INC(void) {
-    const uint8_t data = CPU_read(cpu.addr_abs);
-    CPU_write(cpu.addr_abs, data + 1);
+    uint8_t data = CPU_read(cpu.addr_abs);
+    data++;
+    CPU_write(cpu.addr_abs, data);
     set_flag(FLAG_Z, data == 0);
     set_flag(FLAG_N, data & 0x80);
     return 0;
@@ -359,6 +422,18 @@ uint8_t CLC(void) {
     return 0;
 }
 
+uint8_t SEI(void) {
+    // Disable interrupts (0 = irq and brk are free to go, nmi will always fire)
+    set_flag(FLAG_I, true);
+    return 0;
+}
+
+uint8_t CLI(void) {
+    // Enable interrupts (1 = irq and brk can not run, nmi will always fire)
+    set_flag(FLAG_I, false);
+    return 0;
+}
+
 uint8_t BNE(void) {
     branch_on_condition(get_flag(FLAG_Z) == 0);
     return 0;
@@ -381,6 +456,11 @@ uint8_t BEQ(void) {
 
 uint8_t BMI(void) {
     branch_on_condition(get_flag(FLAG_N) == 1);
+    return 0;
+}
+
+uint8_t BPL(void) {
+    branch_on_condition(get_flag(FLAG_N) == 0);
     return 0;
 }
 
@@ -491,27 +571,73 @@ uint8_t JSR(void) {
     cpu.pc--;
 
     // Push PC hi and lo byte of pc to stack
-    CPU_write(CPU_STACK_PAGE + cpu.sp, (cpu.pc >> 8) & 0x00FF);
-    cpu.sp--;
-    CPU_write(CPU_STACK_PAGE + cpu.sp, cpu.pc & 0x00FF);
-    cpu.sp--;
+    CPU_write(CPU_STACK_PAGE + cpu.sp--, (cpu.pc >> 8) & 0x00FF);
+    CPU_write(CPU_STACK_PAGE + cpu.sp--, cpu.pc & 0x00FF);
 
     // set pc to new address
     cpu.pc = cpu.addr_abs;
     return 0;
 }
 
-uint8_t RTS(void) {
-    cpu.sp++;
+/**
+ * BRK causes a non-maskable interrupt and increments the program counter by one.
+ * Therefore an RTI will go to the address of the BRK +2 so that BRK may be used to
+ * replace a two-byte instruction for debugging and the subsequent RTI will be correct.
+ */
+uint8_t BRK(void) {
+    cpu.pc++;
 
+    // Write hi and lo byte to stack (remember little-endian so reversed since we decrement sp)
+    CPU_write(CPU_STACK_PAGE + cpu.sp--, cpu.pc >> 8);
+    CPU_write(CPU_STACK_PAGE + cpu.sp--, cpu.pc & 0x00FF);
+
+    set_flag(FLAG_I, true);
+    set_flag(FLAG_B, true);
+
+    // Push status to stack
+    CPU_write(CPU_STACK_PAGE + cpu.sp--, cpu.status);
+
+    // Set B back to false
+    set_flag(FLAG_B, false);
+
+
+    // Now set pc to what's been stored in IRQ vector (must load as 16-bit so we can OR them together)
+    const uint16_t irq_lo = CPU_read(CPU_IRQ_LO) & 0x00FF;
+    const uint16_t irq_hi = CPU_read(CPU_IRQ_HI) & 0x00FF;
+    cpu.pc = (irq_hi << 8) | irq_lo;
+
+    return 0;
+}
+
+uint8_t RTS(void) {
     // Pop PC lo and hi byte from the stack
-    const uint16_t pc_lo = CPU_read(CPU_STACK_PAGE + cpu.sp);
-    cpu.sp++;
-    const uint16_t pc_hi = CPU_read(CPU_STACK_PAGE + cpu.sp);
+    const uint16_t pc_lo = CPU_read(CPU_STACK_PAGE + (++cpu.sp));
+    const uint16_t pc_hi = CPU_read(CPU_STACK_PAGE + (++cpu.sp));
+
+    // Set pc to where it was before entering the subroutine +1 (since we decrement by one on JSR)
+    cpu.pc = ((pc_hi << 8) | (pc_lo & 0x00FF)) + 1;
+    return 0;
+}
+
+/**
+ * RTI retrieves the Processor Status Word (flags) and the Program Counter from the stack in that order
+ * (interrupts push the PC first and then the PSW).
+ * Note that unlike RTS, the return address on the stack is the actual address rather than the address-1.
+ * @return 0
+ */
+uint8_t RTI(void) {
+    // Retrieve status register from stack (should be the last thing that was pushed)
+    cpu.status = CPU_read(CPU_STACK_PAGE + (++cpu.sp));
+
+    // Set I to 0
+    set_flag(FLAG_I, false);
+
+    // Retrieve where pc was before calling an interrupt.
+    const uint16_t pc_lo = CPU_read(CPU_STACK_PAGE + (++cpu.sp));
+    const uint16_t pc_hi = CPU_read(CPU_STACK_PAGE + (++cpu.sp));
 
     // Set pc to where it was before entering the subroutine
     cpu.pc = (pc_hi << 8) | (pc_lo & 0x00FF);
-    cpu.pc++;
     return 0;
 }
 
