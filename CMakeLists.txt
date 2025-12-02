@@ -10,6 +10,8 @@ add_library(6502_emulator_lib SHARED
         core/bus.h
         core/disassembler.c
         core/disassembler.h
+        core/rom.c
+        core/rom.h
 )
 
 add_executable(6502_emulator

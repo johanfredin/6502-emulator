@@ -194,11 +194,11 @@ void CPU_load_instructions(void) {
 }
 
 uint8_t CPU_read(const uint16_t addr) {
-    return Bus_read(addr);
+    return BUS_read(addr);
 }
 
 void CPU_write(const uint16_t addr, const uint8_t data) {
-    Bus_write(addr, data);
+    BUS_write(addr, data);
 }
 
 const CPU *CPU_get_state(void) {

@@ -43,8 +43,8 @@ irq_end:
  .word program_start
  .word my_irq_handler
 
- BINARY:
- =======
+BINARY:
+=======
 A9 10 85 00 EA 00 00 00
 00 00 00 00 00 00 00 00
 00 00 00 00 00 00 00 00
