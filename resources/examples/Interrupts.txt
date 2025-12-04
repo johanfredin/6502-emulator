@@ -31,13 +31,6 @@ irq_end:
  PHA
  RTI
 
-
-*=$FFFA
- .word my_nmi_handler
- .word program_start
- .word my_irq_handler
-
-
 *=$FFFA
  .word my_nmi_handler
  .word program_start

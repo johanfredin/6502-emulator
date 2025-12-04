@@ -42,12 +42,12 @@ void BUS_load_ROM(const ROM *const rom) {
      * manually populate it from the hi and lo bytes of rom->org, but
      * that would be cheating :P
      */
-    const uint16_t org = rom->org;
+    const uint16_t org = rom->start;
     const uint8_t *data = rom->data;
-    const uint16_t size = rom->size;
 
-    for (int i = 0; i < size; i++) {
-        BUS_write((org + i), data[i]);
+
+    for (int i = rom->start, j = 0; i <= rom->end; i++, j++) {
+        BUS_write(i, data[j]);
     }
     log_info("Rom loaded at 0x%04x", org);
 }

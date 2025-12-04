@@ -6,6 +6,8 @@
 #define INC_6502_EMULATOR_DISASSEMBLER_H
 #include <stdint.h>
 
+#include "rom.h"
+
 typedef struct SourceLine {
     char *line;
     uint16_t address;
@@ -16,7 +18,8 @@ typedef struct SourceCode {
     uint16_t n_lines;
 } SourceCode;
 
-void Disassembler_parse_binary(uint16_t start, uint16_t end);
+void Disassembler_parse_rom(const ROM *rom);
+void Disassembler_parse_section(uint16_t start, uint16_t end);
 char *Disassembler_get_line_at(uint16_t address);
 SourceCode *Disassembler_get_code();
 

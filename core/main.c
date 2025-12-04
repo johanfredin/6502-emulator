@@ -16,6 +16,10 @@ int main(void) {
     CPU_reset();
 
     // Dump code
-    Disassembler_parse_binary(0x0600, 0x0700);
+    Disassembler_parse_rom(&rom);
+    while (CPU_get_pc() < rom.end) {
+        CPU_step();
+    }
+
     return EXIT_SUCCESS;
 }

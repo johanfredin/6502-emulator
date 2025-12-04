@@ -48,7 +48,7 @@ static inline napi_value bind_uint8_array(const napi_env env, const uint8_t *bus
 }
 
 napi_value cpu_init(const napi_env env, napi_callback_info info) {
-    Bus_init();
+    BUS_init();
     CPU_load_instructions();
     return void_return(env);
 }
@@ -82,7 +82,7 @@ napi_value load_rom(const napi_env env, const napi_callback_info info) {
     const napi_status rom_result = napi_get_value_string_utf8(env, rom_arg, rom, rom_size + 1, NULL);
     try(rom_result == napi_ok, "Could not get the rom, return code=%d", rom_result);
 
-    Bus_load_rom((uint16_t) org, rom);
+    BUS_load_ROM_from_str((uint16_t) org, rom);
 
     // No need to return anything
     free(rom);
@@ -109,7 +109,7 @@ napi_value disassemble(const napi_env env, const napi_callback_info info) {
         napi_get_value_uint32(env, args[1], &end);
     }
 
-    Disassembler_parse_binary((uint16_t) start, (uint16_t) end);
+    Disassembler_parse_section((uint16_t) start, (uint16_t) end);
     return void_return(env);
 catch:
     napi_throw_error(env, NULL, "Error loading rom");
@@ -186,7 +186,7 @@ napi_value get_bus_page(const napi_env env, const napi_callback_info info) {
     const napi_status result = napi_get_value_uint32(env, page_arg, &page);
     try(result == napi_ok, "Could not get page argument. status=%d.", result);
 
-    const uint8_t *bus_chunk = Bus_get_page((uint8_t) page);
+    const uint8_t *bus_chunk = BUS_get_page((uint8_t) page);
 
     const napi_value typed_array = bind_uint8_array(env, bus_chunk);
     try(typed_array, "Typed array is null");

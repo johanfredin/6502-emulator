@@ -31,10 +31,6 @@ void ROM_from_file(ROM *const rom, const char *filename) {
     fread(bytes, 1, file_size, file);
     fclose(file);
 
-    rom->data = bytes;
-    rom->file = file_path;
-    rom->size = file_size;
-
     /*
      * The start of the program is located at 0xFFFC (almost at the very end).
      * And since it's little endian, we have to read them in reverse order
@@ -42,5 +38,9 @@ void ROM_from_file(ROM *const rom, const char *filename) {
     const uint16_t index_org = file_size - 3;
     const uint16_t org_hi = bytes[index_org];
     const uint16_t org_lo = bytes[index_org - 1];
-    rom->org = org_hi << 8 | org_lo;
+
+    rom->start = org_hi << 8 | org_lo;
+    rom->data = bytes;
+    rom->file = file_path;
+    rom->end = rom->start + (file_size - 1);
 }

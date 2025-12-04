@@ -53,6 +53,7 @@ typedef struct Instruction {
 } Instruction;
 
 const CPU *CPU_get_state(void);
+uint16_t CPU_get_pc(void);
 void CPU_load_instructions(void);
 void CPU_reset(void);
 void CPU_irq(void);

@@ -161,6 +161,7 @@ void CPU_load_instructions(void) {
     instructions[0xCC] = (Instruction){.name = "CPY", .addressing = ABS, .opcode = CPY, .cycles = 4};
     instructions[0x48] = (Instruction){.name = "PHA", .addressing = IMP, .opcode = PHA, .cycles = 3};
     instructions[0x68] = (Instruction){.name = "PLA", .addressing = IMP, .opcode = PLA, .cycles = 4};
+    instructions[0x4C] = (Instruction){.name = "JMP", .addressing = ABS, .opcode = JMP, .cycles = 3};
     instructions[0x20] = (Instruction){.name = "JSR", .addressing = ABS, .opcode = JSR, .cycles = 6};
     instructions[0x60] = (Instruction){.name = "RTS", .addressing = IMP, .opcode = RTS, .cycles = 6};
     instructions[0x40] = (Instruction){.name = "RTI", .addressing = IMP, .opcode = RTI, .cycles = 6};
@@ -203,6 +204,10 @@ void CPU_write(const uint16_t addr, const uint8_t data) {
 
 const CPU *CPU_get_state(void) {
     return &cpu;
+}
+
+uint16_t CPU_get_pc(void) {
+    return cpu.pc;
 }
 
 // Emulate cpu start/reset
@@ -307,7 +312,7 @@ void CPU_step(void) {
     while (cpu.cycles > 0) {
         CPU_tick();
     }
-    puts(Disassembler_get_line_at(cpu.pc));
+    printf("PC=%04X, DATA=%s\n", cpu.pc, Disassembler_get_line_at(cpu.pc));
     CPU_tick();
 }
 

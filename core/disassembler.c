@@ -9,10 +9,15 @@
 
 #include "cpu.h"
 #include "dbg.h"
+#include "rom.h"
 
 static SourceCode code;
 
-void Disassembler_parse_binary(const uint16_t start, const uint16_t end) {
+void Disassembler_parse_rom(const ROM *const rom) {
+    Disassembler_parse_section(rom->start, rom->end);
+}
+
+void Disassembler_parse_section(const uint16_t start, const uint16_t end) {
     const uint16_t max_instructions = end - start;
     SourceLine *lines = calloc(max_instructions, sizeof(SourceLine));
     check_mem(lines, exit(EXIT_FAILURE));
@@ -32,38 +37,38 @@ void Disassembler_parse_binary(const uint16_t start, const uint16_t end) {
             snprintf(operand_str, operand_len, "{IMP}");
         } else if (addr_fn == IMM) {
             const uint8_t data = CPU_read(addr++);
-            snprintf(operand_str, operand_len, "#$%02x {IMM}", data);
+            snprintf(operand_str, operand_len, "#$%02X {IMM}", data);
         } else if (addr_fn == ABS) {
             const uint8_t lo = CPU_read(addr++);
             const uint8_t hi = CPU_read(addr++);
             const uint16_t abs = (hi << 8) | lo;
-            snprintf(operand_str, operand_len, "$%04x {ABS}", abs);
+            snprintf(operand_str, operand_len, "$%04X {ABS}", abs);
         } else if (addr_fn == ABX) {
             const uint8_t lo = CPU_read(addr++);
             const uint8_t hi = CPU_read(addr++);
             const uint16_t abx = (hi << 8) | lo;
-            snprintf(operand_str, operand_len, "$%04x,X {ABX}", abx);
+            snprintf(operand_str, operand_len, "$%04X,X {ABX}", abx);
         } else if (addr_fn == ABY) {
             const uint8_t lo = CPU_read(addr++);
             const uint8_t hi = CPU_read(addr++);
             const uint16_t aby = (hi << 8) | lo;
-            snprintf(operand_str, operand_len, "$%04x,Y {ABY}", aby);
+            snprintf(operand_str, operand_len, "$%04X,Y {ABY}", aby);
         } else if (addr_fn == ZP0) {
             const uint8_t data = CPU_read(addr++);
-            snprintf(operand_str, operand_len, "$%02x {ZP0}", data);
+            snprintf(operand_str, operand_len, "$%02X {ZP0}", data);
         } else if (addr_fn == ZPX) {
             const uint8_t data = CPU_read(addr++);
-            snprintf(operand_str, operand_len, "$%02x,X {ZPX}", data);
+            snprintf(operand_str, operand_len, "$%02X,X {ZPX}", data);
         } else if (addr_fn == ZPY) {
             const uint8_t data = CPU_read(addr++);
-            snprintf(operand_str, operand_len, "$%02x,Y {ZPY}", data);
+            snprintf(operand_str, operand_len, "$%02X,Y {ZPY}", data);
         } else if (addr_fn == REL) {
             const uint8_t data = CPU_read(addr++);
-            snprintf(operand_str, operand_len, "$%02x {REL}", data);
+            snprintf(operand_str, operand_len, "$%02X {REL}", data);
         }
 
         snprintf(buffer, 32,
-                 "%04x: %-4s %s",
+                 "%04X: %-4s %s",
                  origin,
                  ins->name,
                  operand_str
