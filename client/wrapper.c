@@ -8,20 +8,20 @@
 #include "../core/cpu.h"
 #include "../core/disassembler.h"
 
-static inline napi_value void_return(const napi_env env) {
+static napi_value void_return(const napi_env env) {
     napi_value nv;
     napi_get_undefined(env, &nv);
     return nv;
 }
 
-static inline void bind_unsigned_int_field(const napi_env env, const napi_value c_struct, const char *field_name,
+static void bind_unsigned_int_field(const napi_env env, const napi_value c_struct, const char *field_name,
                                            const uint32_t field_value) {
     napi_value nv;
     napi_create_uint32(env, field_value, &nv);
     napi_set_named_property(env, c_struct, field_name, nv);
 }
 
-static inline napi_value bind_uint8_array(const napi_env env, const uint8_t *bus_chunk) {
+static napi_value bind_uint8_array(const napi_env env, const uint8_t *bus_chunk) {
     napi_value array_buffer;
     napi_status status = napi_create_external_arraybuffer(
         env,
@@ -83,9 +83,44 @@ napi_value load_rom(const napi_env env, const napi_callback_info info) {
     try(rom_result == napi_ok, "Could not get the rom, return code=%d", rom_result);
 
     BUS_load_ROM_from_str((uint16_t) org, rom);
+    Disassembler_parse_section(org, org + rom_size - 1);
 
     // No need to return anything
     free(rom);
+    return void_return(env);
+catch:
+    napi_throw_error(env, NULL, "Error loading rom");
+    return void_return(env);
+}
+
+napi_value load_file(const napi_env env, const napi_callback_info info) {
+    // Requires arguments org and rom
+    size_t argc = 1;
+    napi_value args[1];
+    const napi_status argc_result = napi_get_cb_info(env, info, &argc, args, NULL, NULL);
+    try(argc_result == napi_ok, "Failed to retrieve arguments, status=%u", argc_result);
+    try(argc == 1, "Wrong amount of arguments, expected: 1, got %lu", argc);
+
+    // Retrieve the file arg
+    const napi_value file_arg = args[0];
+    char file_path[64];
+    const napi_status file_result = napi_get_value_string_utf8(env, file_arg, file_path, 64 + 1, NULL);
+    try(file_result == napi_ok, "Could not get the rom, return code=%d", file_result);
+
+    ROM rom;
+    ROM_from_file(&rom, file_path);
+    BUS_load_ROM(&rom);
+    Disassembler_parse_rom(&rom);
+
+    // Return the rom struct
+    // napi_value rom_bind;
+    // napi_create_object(env, &rom_bind);
+    //
+    // bind_unsigned_int_field(env, rom_bind, "start", rom.start);
+    // bind_unsigned_int_field(env, rom_bind, "end", rom.end);
+    //
+    // // No need to return anything
+    // return rom_bind;
     return void_return(env);
 catch:
     napi_throw_error(env, NULL, "Error loading rom");
@@ -211,9 +246,11 @@ napi_value init(const napi_env env, const napi_value exports) {
     napi_value fn_cpu_step;
     napi_value fn_disassemble;
     napi_value fn_get_disassembly;
+    napi_value fn_load_file;
 
     napi_create_function(env, "cpu_init", NAPI_AUTO_LENGTH, cpu_init, NULL, &fn_cpu_init);
     napi_create_function(env, "load_rom", NAPI_AUTO_LENGTH, load_rom, NULL, &fn_load_rom);
+    napi_create_function(env, "load_file", NAPI_AUTO_LENGTH, load_file, NULL, &fn_load_file);
     napi_create_function(env, "cpu_reset", NAPI_AUTO_LENGTH, cpu_reset, NULL, &fn_cpu_reset);
     napi_create_function(env, "get_cpu_state", NAPI_AUTO_LENGTH, get_cpu_state, NULL, &fn_get_cpu_state);
     napi_create_function(env, "get_bus_page", NAPI_AUTO_LENGTH, get_bus_page, NULL, &fn_get_bus_page);
@@ -222,6 +259,7 @@ napi_value init(const napi_env env, const napi_value exports) {
     napi_create_function(env, "get_disassembly", NAPI_AUTO_LENGTH, get_disassembly, NULL, &fn_get_disassembly);
     napi_set_named_property(env, exports, "cpu_init", fn_cpu_init);
     napi_set_named_property(env, exports, "load_rom", fn_load_rom);
+    napi_set_named_property(env, exports, "load_file", fn_load_file);
     napi_set_named_property(env, exports, "cpu_reset", fn_cpu_reset);
     napi_set_named_property(env, exports, "get_cpu_state", fn_get_cpu_state);
     napi_set_named_property(env, exports, "get_bus_page", fn_get_bus_page);

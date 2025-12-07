@@ -42,8 +42,8 @@
 
         <p>
 
-        <button x-on:click="step()">Step</button>
-        <button x-on:click="reset()"> RESET</button>
+           <button class="retro-btn" x-on:click="step()">Step</button>
+           <button class="retro-btn" x-on:click="reset()"> RESET</button>
     </div>
     <h2>Disassembly</h2>
     <div class="disassembly-container">
@@ -87,6 +87,7 @@
                     <td
                             x-text="hex(stackData[(row-1)*16 + (col-1)] ?? 0)"
                             :data-nonzero="(stackData[(row-1)*16 + (col-1)] ?? 0) !== 0"
+                            :class="{ 'sp-highlight': isSpPosition((row-1)*16 + (col-1)) }"
                     ></td>
                 </template>
             </tr>

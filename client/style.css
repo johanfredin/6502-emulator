@@ -47,6 +47,30 @@ button:hover {
     border-color: #9fb2ff;
 }
 
+button.retro-btn {
+    background: linear-gradient(180deg, #3040ff 0%, #1624d1 50%, #0f1aaa 100%);
+    border: 3px outset #8090ff;
+    box-shadow:
+            2px 2px 0 #0a0f77,
+            inset 1px 1px 0 #6070ff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 6px 14px;
+}
+
+button.retro-btn:hover {
+    background: linear-gradient(180deg, #4050ff 0%, #2636ff 50%, #1624cc 100%);
+    border-color: #a0b0ff;
+}
+
+button.retro-btn:active {
+    border-style: inset;
+    box-shadow:
+            1px 1px 0 #0a0f77,
+            inset 2px 2px 0 #0a0f77;
+    transform: translate(1px, 1px);
+}
+
 /* Disassembly area */
 
 .disassembly-container {
@@ -91,6 +115,22 @@ td[data-nonzero="true"] {
     text-shadow: 0 0 3px #b6c7ff;
     border-color: #2a39ff;
 }
+
+
+/* Stack pointer highlight */
+td.sp-highlight {
+    background: #5f70ff;
+    color: #ffffff;
+    box-shadow: 0 0 8px 2px #8090ffaa, inset 0 0 4px #b0c0ff;
+    border: 2px solid #a0b0ff;
+    animation: sp-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes sp-pulse {
+    0%, 100% { box-shadow: 0 0 8px 2px #8090ffaa, inset 0 0 4px #b0c0ff; }
+    50% { box-shadow: 0 0 12px 4px #a0b0ffcc, inset 0 0 6px #c0d0ff; }
+}
+
 
 /* Address column highlight */
 

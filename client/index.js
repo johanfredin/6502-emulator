@@ -29,6 +29,12 @@ document.addEventListener('alpine:init', () => {
             return (this.cpu.status & flag) ? 1 : 0;
         },
 
+        isSpPosition(index) {
+            // SP points to 0x01XX, so the offset within the stack page is the low byte
+            const spOffset = this.cpu.sp & 0xFF;
+            return index === spOffset;
+        },
+
         hex(value, size = 2) {
             if (!value) {
                 value = 0;
@@ -74,14 +80,33 @@ document.addEventListener('alpine:init', () => {
         async loadProgram() {
             this.memoryPage = 0x00;
             const program = programs.find(p => p.name === this.loadedProgramName);
-            const rom = program.binary.toString();
-            await fetch('/loadRom', {
-                method: 'POST',
-                body: rom,
-                headers: { 'Content-Type': 'text/plain' }
-            });
+            let disassemblyResponse = null;
+            if (program.binary) {
+                const rom = program.binary.toString();
+                disassemblyResponse = await fetch('/loadRom', {
+                    method: 'POST',
+                    body: rom,
+                    headers: {'Content-Type': 'text/plain'}
+                });
+            } else if (program.file) {
+                const file = program.file;
+                disassemblyResponse = await fetch('/loadFile', {
+                    method: 'POST',
+                    body: file,
+                    headers: {'Content-Type': 'text/plain'}
+                });
+            } else {
+                throw new Error("No binary or file specified for program");
+            }
+
             await this.getCpuState();
-            await this.loadDisassembly();
+
+            // Retrieve the disassembled result
+            this.disassembly = disassemblyResponse.json();
+            this.disassembly.forEach((line, index) => {
+                this.pcToLineIndex[line.pc] = index;
+            })
+
             await this.loadPage(this.memoryPage);
             await this.loadStackPage();
         },
@@ -113,16 +138,6 @@ document.addEventListener('alpine:init', () => {
             const res = await fetch('/memory/' + this.stackPage);
             const buffer = await res.arrayBuffer();
             this.stackData = new Uint8Array(buffer);
-        },
-
-        async loadDisassembly() {
-            const res = await fetch('/disassembly');
-            this.disassembly = await res.json();
-
-            // Build adress-to-index map
-            this.disassembly.forEach((line, index) => {
-                this.pcToLineIndex[line.pc] = index;
-            })
         },
 
         isCurrentLine(address) {

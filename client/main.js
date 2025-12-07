@@ -34,11 +34,6 @@ app.get('/memory/:page', (req, res) => {
     return res.send(Buffer.from(chunk));
 })
 
-app.get('/disassembly', (req, res) => {
-    const disassembly = emulator.get_disassembly();
-    return res.json(disassembly);
-})
-
 app.post('/loadRom', express.text({ type: '*/*' }), (req, res) => {
     // Clear bus and cpu state
     emulator.cpu_init();
@@ -46,12 +41,27 @@ app.post('/loadRom', express.text({ type: '*/*' }), (req, res) => {
     const rom = req.body;
     const len = rom.length;
     emulator.load_rom(0x0600, len, rom);
-    emulator.disassemble(0x0600, 0x0700);
 
     // Call reset again to load the program into memory
     emulator.cpu_reset();
 
-    return res.status(200).send();
+    const disassembly = emulator.get_disassembly();
+    return res.json(disassembly);
+});
+
+app.post('/loadFile', express.text({ type: '*/*' }), (req, res) => {
+    // Clear bus and cpu state
+    emulator.cpu_init();
+
+    const file = req.body;
+    emulator.load_file(file);
+
+    // Call reset again to load the program into memory
+    emulator.cpu_reset();
+
+    // Retrieve disassembled lines
+    const disassembly = emulator.get_disassembly();
+    return res.json(disassembly);
 });
 
 // Init on startup

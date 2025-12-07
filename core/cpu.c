@@ -592,11 +592,13 @@ uint8_t JSR(void) {
 uint8_t BRK(void) {
     cpu.pc++;
 
+    set_flag(FLAG_I, true);
+
     // Write hi and lo byte to stack (remember little-endian so reversed since we decrement sp)
-    CPU_write(CPU_STACK_PAGE + cpu.sp--, cpu.pc >> 8);
+    CPU_write(CPU_STACK_PAGE + cpu.sp--, (cpu.pc >> 8) & 0x00FF);
     CPU_write(CPU_STACK_PAGE + cpu.sp--, cpu.pc & 0x00FF);
 
-    set_flag(FLAG_I, true);
+
     set_flag(FLAG_B, true);
 
     // Push status to stack
