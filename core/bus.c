@@ -14,10 +14,8 @@
 static uint8_t ram[RAM_SIZE];
 
 void BUS_init(void) {
-    memset(ram, 0, RAM_SIZE);
-    ROM rom;
-    ROM_from_file(&rom, "kernel-rom.bin");
-    BUS_load_ROM(&rom);
+    // Set the default ram to NOOP to prevent calling non-existing IRQ handlers (since 0 == BRK)
+    memset(ram, CPU_OPCODE_NOP, RAM_SIZE);
 }
 
 void BUS_load_ROM_from_str(const uint16_t org, char *rom) {

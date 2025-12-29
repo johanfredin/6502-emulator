@@ -140,6 +140,14 @@ document.addEventListener('alpine:init', () => {
             this.stackData = new Uint8Array(buffer);
         },
 
+        async nmi() {
+            await fetch('/nmi');
+        },
+
+        async irq() {
+            await fetch('/irq');
+        },
+
         isCurrentLine(address) {
             return address === this.cpu.pc;
         }

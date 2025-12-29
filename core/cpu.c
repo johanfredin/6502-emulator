@@ -97,11 +97,6 @@ static void set_add_or_sub_result(const uint16_t data) {
 // Public functions
 // =========================================================
 void CPU_load_instructions(void) {
-    // Set instructions (fill the ones we have not yet defined as NOP)
-    for (int i = 0; i < N_INSTRUCTIONS; i++) {
-        instructions[i] = (Instruction){.name = "NOP", .addressing = IMP, .opcode = NOP, .cycles = 2};
-    }
-
     // Set our defined ones
     instructions[0x00] = (Instruction){.name = "BRK", .addressing = IMP, .opcode = BRK, .cycles = 7};
     instructions[0xA9] = (Instruction){.name = "LDA", .addressing = IMM, .opcode = LDA, .cycles = 2};
@@ -191,6 +186,8 @@ void CPU_load_instructions(void) {
     instructions[0x24] = (Instruction){.name = "BIT", .addressing = ZP0, .opcode = BIT, .cycles = 3};
     instructions[0x2C] = (Instruction){.name = "BIT", .addressing = ABS, .opcode = BIT, .cycles = 4};
 
+    instructions[CPU_OPCODE_NOP] = (Instruction){.name = "NOP", .addressing = IMP, .opcode = NOP, .cycles = 2};
+
     log_info("Instructions loaded");
 }
 
@@ -226,7 +223,8 @@ void CPU_reset(void) {
     cpu.sp = CPU_STACK_PTR_START;
 
     // Set interrupt disabled and unused to 1
-    cpu.status = 0x00 | FLAG_U;
+    cpu.status = 0x00;
+    set_flag(FLAG_U, true);
 
     cpu.addr_abs = 0x0000;
     cpu.addr_rel = 0x0000;
@@ -237,13 +235,7 @@ void CPU_reset(void) {
     log_info("CPU started");
 }
 
-// Emulate interrupt requests that are only allowed if allowed (I flag == 0)
-void CPU_irq(void) {
-    if (get_flag(FLAG_I) == 1) {
-        // If disable interrupts are set, we are not allowed to run
-        return;
-    }
-
+static void hardware_interrupt(const uint16_t pc_lo, const uint16_t pc_hi) {
     // Write hi and lo byte to stack (remember little-endian so reversed since we decrement sp)
     CPU_write(CPU_STACK_PAGE + cpu.sp--, cpu.pc >> 8);
     CPU_write(CPU_STACK_PAGE + cpu.sp--, cpu.pc & 0x00FF);
@@ -258,38 +250,27 @@ void CPU_irq(void) {
     // Set I flag to true after copy (will be restored to 0 in RTI)
     set_flag(FLAG_I, true);
 
-    // Now set pc to what's been stored in IRQ vector (must load as 16-bit so we can OR them together)
-    const uint16_t irq_lo = CPU_read(CPU_IRQ_LO) & 0x00FF;
-    const uint16_t irq_hi = CPU_read(CPU_IRQ_HI) & 0x00FF;
-    cpu.pc = (irq_hi << 8) | irq_lo;
+    // Set pc to irq address (irq or nmi)
+    cpu.pc = (CPU_read(pc_lo) << 8) | (CPU_read(pc_hi) & 0x00FF);
 
     // Interrupts takes ~7 cycles
     cpu.cycles = 7;
 }
 
+// Emulate interrupt requests that are only allowed if allowed (I flag == 0)
+void CPU_irq(void) {
+    if (get_flag(FLAG_I) == 1) {
+        // If disable interrupts are set, we are not allowed to run
+        return;
+    }
+    hardware_interrupt(CPU_IRQ_LO, CPU_IRQ_HI);
+    log_info("CPU IRQ requested, pc at: %04x", cpu.pc);
+}
+
 // Emulate non-maskable interrupts i.e., They will always run regardless of I flag
 void CPU_nmi(void) {
-    // Write hi and lo byte to stack (remember little-endian so reversed since we decrement sp)
-    CPU_write(CPU_STACK_PAGE + cpu.sp--, cpu.pc >> 8);
-    CPU_write(CPU_STACK_PAGE + cpu.sp--, cpu.pc & 0x00FF);
-
-    // Set B and U flags before pushing
-    set_flag(FLAG_B, false);
-    set_flag(FLAG_U, true);
-
-    // Push status register to the stack
-    CPU_write(CPU_STACK_PAGE + cpu.sp--, cpu.status);
-
-    // Set actual I flag to true after pushing to stack (will be set back to 0 in RTI)
-    set_flag(FLAG_I, true);
-
-    // Now set pc to what's been stored in NMI vector (must load as 16-bit so we can OR them together)
-    const uint16_t nmi_lo = CPU_read(CPU_NMI_LO) & 0x00FF;
-    const uint16_t nmi_hi = CPU_read(CPU_NMI_HI) & 0x00FF;
-    cpu.pc = (nmi_hi << 8) | nmi_lo;
-
-    // NMI takes ~7 cycles
-    cpu.cycles = 7;
+    hardware_interrupt(CPU_NMI_LO, CPU_NMI_HI);
+    log_info("CPU NMI requested, pc at: %04x", cpu.pc);
 }
 
 void CPU_tick(void) {
@@ -589,24 +570,20 @@ uint8_t JSR(void) {
  * replace a two-byte instruction for debugging and the subsequent RTI will be correct.
  */
 uint8_t BRK(void) {
-    cpu.pc += 2;
-
     set_flag(FLAG_I, true);
 
-    // Write hi and lo byte to stack (remember little-endian so reversed since we decrement sp)
+    // Write hi and lo byte to stack (little-endian, reversed due to SP decrement)
     CPU_write(CPU_STACK_PAGE + cpu.sp--, (cpu.pc >> 8) & 0x00FF);
     CPU_write(CPU_STACK_PAGE + cpu.sp--, cpu.pc & 0x00FF);
 
-
+    // Set B flag to 1 before pushing status (to indicate BRK vs IRQ)
     set_flag(FLAG_B, true);
-
-    // Push status to stack
     CPU_write(CPU_STACK_PAGE + cpu.sp--, cpu.status);
-
-    // Set B back to false
+    
+    // B flag is cleared immediately after (it's only used for identification on the stack)
     set_flag(FLAG_B, false);
 
-    // Now set pc to what's been stored in IRQ vector (must load as 16-bit so we can OR them together)
+    // Jump to IRQ vector
     const uint16_t irq_lo = CPU_read(CPU_IRQ_LO) & 0x00FF;
     const uint16_t irq_hi = CPU_read(CPU_IRQ_HI) & 0x00FF;
     cpu.pc = irq_lo | (irq_hi << 8);
@@ -634,8 +611,9 @@ uint8_t RTI(void) {
     // Retrieve status register from stack (should be the last thing that was pushed)
     cpu.status = CPU_read(CPU_STACK_PAGE + (++cpu.sp));
 
-    // Set I to 0
+    // Set I and B to 0
     set_flag(FLAG_I, false);
+    set_flag(FLAG_B, false);
 
     // Retrieve where pc was before calling an interrupt.
     const uint16_t pc_lo = CPU_read(CPU_STACK_PAGE + (++cpu.sp));

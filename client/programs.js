@@ -195,6 +195,6 @@ programs = [
         name: "Interrupts",
         description: "Try BRK and RTI",
         asm: [""],
-        file: "Interrupts.bin"
+        file: "interrupts.bin"
     }
 ];

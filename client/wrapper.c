@@ -236,6 +236,16 @@ napi_value cpu_step(const napi_env env, napi_callback_info info) {
     return void_return(env);
 }
 
+napi_value cpu_nmi(const napi_env env, napi_callback_info info) {
+    CPU_nmi();
+    return void_return(env);
+}
+
+napi_value cpu_irq(const napi_env env, napi_callback_info info) {
+    CPU_irq();
+    return void_return(env);
+}
+
 // Module initialization
 napi_value init(const napi_env env, const napi_value exports) {
     napi_value fn_cpu_init;
@@ -247,6 +257,8 @@ napi_value init(const napi_env env, const napi_value exports) {
     napi_value fn_disassemble;
     napi_value fn_get_disassembly;
     napi_value fn_load_file;
+    napi_value fn_cpu_nmi;
+    napi_value fn_cpu_irq;
 
     napi_create_function(env, "cpu_init", NAPI_AUTO_LENGTH, cpu_init, NULL, &fn_cpu_init);
     napi_create_function(env, "load_rom", NAPI_AUTO_LENGTH, load_rom, NULL, &fn_load_rom);
@@ -257,6 +269,8 @@ napi_value init(const napi_env env, const napi_value exports) {
     napi_create_function(env, "cpu_step", NAPI_AUTO_LENGTH, cpu_step, NULL, &fn_cpu_step);
     napi_create_function(env, "disassemble", NAPI_AUTO_LENGTH, disassemble, NULL, &fn_disassemble);
     napi_create_function(env, "get_disassembly", NAPI_AUTO_LENGTH, get_disassembly, NULL, &fn_get_disassembly);
+    napi_create_function(env, "cpu_nmi", NAPI_AUTO_LENGTH, cpu_nmi, NULL, &fn_cpu_nmi);
+    napi_create_function(env, "cpu_irq", NAPI_AUTO_LENGTH, cpu_irq, NULL, &fn_cpu_irq);
     napi_set_named_property(env, exports, "cpu_init", fn_cpu_init);
     napi_set_named_property(env, exports, "load_rom", fn_load_rom);
     napi_set_named_property(env, exports, "load_file", fn_load_file);
@@ -266,6 +280,8 @@ napi_value init(const napi_env env, const napi_value exports) {
     napi_set_named_property(env, exports, "cpu_step", fn_cpu_step);
     napi_set_named_property(env, exports, "disassemble", fn_disassemble);
     napi_set_named_property(env, exports, "get_disassembly", fn_get_disassembly);
+    napi_set_named_property(env, exports, "cpu_nmi", fn_cpu_nmi);
+    napi_set_named_property(env, exports, "cpu_irq", fn_cpu_irq);
     return exports;
 }
 

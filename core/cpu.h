@@ -26,6 +26,8 @@
 #define CPU_IRQ_LO 0xFFFE
 #define CPU_IRQ_HI 0xFFFF
 
+#define CPU_OPCODE_NOP 0xEA
+
 // =========================================================
 // Type declarations
 // =========================================================

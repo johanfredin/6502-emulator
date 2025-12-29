@@ -64,6 +64,16 @@ app.post('/loadFile', express.text({ type: '*/*' }), (req, res) => {
     return res.json(disassembly);
 });
 
+app.get('/nmi', (req, res) => {
+    emulator.cpu_nmi();
+    return res.status(200).send();
+})
+
+app.get('/irq', (req, res) => {
+    emulator.cpu_irq();
+    return res.status(200).send();
+})
+
 // Init on startup
 reset();
 
