@@ -33,7 +33,6 @@ void ROM_from_file(ROM *const rom, const char *filename) {
 
     /*
      * The start of the program is located at 0xFFFC (almost at the very end).
-     * And since it's little endian, we have to read them in reverse order
      */
     const uint16_t index_org = file_size - 3;
     const uint16_t org_hi = bytes[index_org];

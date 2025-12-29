@@ -15,6 +15,9 @@ static uint8_t ram[RAM_SIZE];
 
 void BUS_init(void) {
     memset(ram, 0, RAM_SIZE);
+    ROM rom;
+    ROM_from_file(&rom, "kernel-rom.bin");
+    BUS_load_ROM(&rom);
 }
 
 void BUS_load_ROM_from_str(const uint16_t org, char *rom) {

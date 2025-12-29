@@ -241,7 +241,6 @@ void CPU_reset(void) {
 void CPU_irq(void) {
     if (get_flag(FLAG_I) == 1) {
         // If disable interrupts are set, we are not allowed to run
-        // This most likely because another interrupt is currently running
         return;
     }
 
@@ -428,13 +427,13 @@ uint8_t CLC(void) {
 }
 
 uint8_t SEI(void) {
-    // Disable interrupts (0 = irq and brk are free to go, nmi will always fire)
+    // Set interrupt disable bit (0 = irq and brk are free to go, nmi will always fire)
     set_flag(FLAG_I, true);
     return 0;
 }
 
 uint8_t CLI(void) {
-    // Enable interrupts (1 = irq and brk can not run, nmi will always fire)
+    // Clear interrupt disable bit
     set_flag(FLAG_I, false);
     return 0;
 }
@@ -590,7 +589,7 @@ uint8_t JSR(void) {
  * replace a two-byte instruction for debugging and the subsequent RTI will be correct.
  */
 uint8_t BRK(void) {
-    cpu.pc++;
+    cpu.pc += 2;
 
     set_flag(FLAG_I, true);
 
@@ -607,11 +606,10 @@ uint8_t BRK(void) {
     // Set B back to false
     set_flag(FLAG_B, false);
 
-
     // Now set pc to what's been stored in IRQ vector (must load as 16-bit so we can OR them together)
     const uint16_t irq_lo = CPU_read(CPU_IRQ_LO) & 0x00FF;
     const uint16_t irq_hi = CPU_read(CPU_IRQ_HI) & 0x00FF;
-    cpu.pc = (irq_hi << 8) | irq_lo;
+    cpu.pc = irq_lo | (irq_hi << 8);
 
     return 0;
 }

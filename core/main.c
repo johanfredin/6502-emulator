@@ -8,16 +8,16 @@
 
 
 int main(void) {
-    ROM rom;
-    ROM_from_file(&rom, "Interrupts.bin");
+    // ROM rom;
+    // ROM_from_file(&rom, "kernel-rom.bin");
     BUS_init();
     CPU_load_instructions();
-    BUS_load_ROM(&rom);
+    // BUS_load_ROM(&rom);
     CPU_reset();
 
     // Dump code
-    Disassembler_parse_rom(&rom);
-    while (CPU_get_pc() < rom.end) {
+    Disassembler_parse_section(0xFF00, 0xFFFF);
+    while (CPU_get_pc() < 0xFFFF) {
         CPU_step();
     }
 
