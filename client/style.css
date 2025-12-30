@@ -90,6 +90,8 @@ button.retro-btn:active {
 .disassembly-line.current {
     background: #6980ff;
     color: #000000;
+    font-weight: bold;
+    border-left: 2px solid #ffcc00;
 }
 
 /* Memory Tables */

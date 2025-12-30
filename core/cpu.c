@@ -33,14 +33,6 @@ static void set_flag(const uint8_t flag, const bool b) {
     }
 }
 
-static void set_flag_to_copy(uint8_t *status_copy, const uint8_t flag, const bool b) {
-    if (b) {
-        *status_copy |= flag;
-    } else {
-        *status_copy &= ~flag;
-    }
-}
-
 static bool get_flag(const uint8_t flag) {
     return cpu.status & flag;
 }
@@ -251,7 +243,7 @@ static void hardware_interrupt(const uint16_t pc_lo, const uint16_t pc_hi) {
     set_flag(FLAG_I, true);
 
     // Set pc to irq address (irq or nmi)
-    cpu.pc = (CPU_read(pc_lo) << 8) | (CPU_read(pc_hi) & 0x00FF);
+    cpu.pc = (CPU_read(pc_hi) << 8) | (CPU_read(pc_lo) & 0x00FF);
 
     // Interrupts takes ~7 cycles
     cpu.cycles = 7;
@@ -586,7 +578,7 @@ uint8_t BRK(void) {
     // Jump to IRQ vector
     const uint16_t irq_lo = CPU_read(CPU_IRQ_LO) & 0x00FF;
     const uint16_t irq_hi = CPU_read(CPU_IRQ_HI) & 0x00FF;
-    cpu.pc = irq_lo | (irq_hi << 8);
+    cpu.pc = (irq_hi << 8) | irq_lo;
 
     return 0;
 }

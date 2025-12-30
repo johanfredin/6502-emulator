@@ -66,12 +66,14 @@ app.post('/loadFile', express.text({ type: '*/*' }), (req, res) => {
 
 app.get('/nmi', (req, res) => {
     emulator.cpu_nmi();
-    return res.status(200).send();
+    const cpuState = emulator.get_cpu_state();
+    return res.json(cpuState);
 })
 
 app.get('/irq', (req, res) => {
     emulator.cpu_irq();
-    return res.status(200).send();
+    const cpuState = emulator.get_cpu_state();
+    return res.json(cpuState);
 })
 
 // Init on startup

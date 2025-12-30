@@ -51,6 +51,7 @@
     <div class="disassembly-container">
         <template x-for="line in disassembly" :key="line.address">
             <div class="disassembly-line"
+                 :id="'line-' + line.address"
                  :class="{ 'current': isCurrentLine(line.address) }"
                  x-text="line.line">
 

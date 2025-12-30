@@ -18,7 +18,7 @@
 
 #define CPU_ZERO_PAGE 0x0000
 #define CPU_STACK_PAGE 0x0100
-#define CPU_STACK_PTR_START 0x00FD
+#define CPU_STACK_PTR_START 0x00FF
 #define CPU_NMI_LO 0xFFFA
 #define CPU_NMI_HI 0xFFFB
 #define CPU_RESET_LO 0xFFFC
@@ -66,7 +66,7 @@ Instruction *CPU_get_instruction(uint8_t opcode);
 
 // Tick one cycle
 void CPU_tick(void);
-// Tick to next instruction (e.g cycles==0)
+// Tick to the next instruction (e.g. cycles==0)
 void CPU_step(void);
 
 // Opcodes

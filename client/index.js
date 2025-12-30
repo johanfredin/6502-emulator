@@ -70,6 +70,7 @@ document.addEventListener('alpine:init', () => {
                 await fetch('/reset');
                 await this.getCpuState();
             }
+            this.scrollToCurrentLine();
         },
 
         async getCpuState() {
@@ -116,6 +117,8 @@ document.addEventListener('alpine:init', () => {
             this.cpu = await cpuRes.json();
             await this.loadPage(this.memoryPage);
             await this.loadStackPage();
+
+            this.scrollToCurrentLine();
         },
 
         async loadPage(page) {
@@ -141,11 +144,25 @@ document.addEventListener('alpine:init', () => {
         },
 
         async nmi() {
-            await fetch('/nmi');
+            const res = await fetch('/nmi');
+            this.cpu = await res.json();
+            this.scrollToCurrentLine();
         },
 
         async irq() {
-            await fetch('/irq');
+            const res = await fetch('/irq');
+            this.cpu = await res.json();
+            this.scrollToCurrentLine();
+        },
+
+        scrollToCurrentLine() {
+            this.$nextTick(() => {
+                // Scroll the current disassembly line into view
+                const currentLine = document.querySelector('.disassembly-line.current');
+                if (currentLine) {
+                    currentLine.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            });
         },
 
         isCurrentLine(address) {
