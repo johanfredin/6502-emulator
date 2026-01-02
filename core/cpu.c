@@ -824,8 +824,6 @@ uint8_t TXA(void) {
 
 uint8_t TXS(void) {
     cpu.sp = cpu.x;
-    set_flag(FLAG_Z, cpu.sp == 0);
-    set_flag(FLAG_N, cpu.sp & 0x80);
     return 0;
 }
 
