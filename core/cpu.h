@@ -26,7 +26,6 @@
 #define CPU_IRQ_LO 0xFFFE
 #define CPU_IRQ_HI 0xFFFF
 
-#define CPU_OPCODE_NOP 0xEA
 
 // =========================================================
 // Type declarations
@@ -70,47 +69,63 @@ void CPU_tick(void);
 void CPU_step(void);
 
 // Opcodes
+uint8_t ADC(void);
+uint8_t AND(void);
+uint8_t ASL(void);
+uint8_t BCC(void);
+uint8_t BCS(void);
+uint8_t BEQ(void);
+uint8_t BIT(void);
+uint8_t BMI(void);
+uint8_t BNE(void);
+uint8_t BPL(void);
+uint8_t BRK(void);
+uint8_t BVC(void);
+uint8_t BVS(void);
+uint8_t CLC(void);
+uint8_t CLD(void);
+uint8_t CLI(void);
+uint8_t CLV(void);
+uint8_t CMP(void);
+uint8_t CPX(void);
+uint8_t CPY(void);
+uint8_t DEC(void);
+uint8_t DEX(void);
+uint8_t DEY(void);
+uint8_t EOR(void);
+uint8_t INC(void);
+uint8_t INX(void);
+uint8_t INY(void);
+uint8_t JMP(void);
+uint8_t JSR(void);
 uint8_t LDA(void);
 uint8_t LDX(void);
 uint8_t LDY(void);
+uint8_t LSR(void);
+uint8_t NOP(void);
+uint8_t ORA(void);
+uint8_t PHA(void);
+uint8_t PHP(void);
+uint8_t PLA(void);
+uint8_t PLP(void);
+uint8_t ROL(void);
+uint8_t ROR(void);
+uint8_t RTI(void);
+uint8_t RTS(void);
+uint8_t SBC(void);
+uint8_t SEC(void);
+uint8_t SED(void);
+uint8_t SEI(void);
 uint8_t STA(void);
 uint8_t STX(void);
 uint8_t STY(void);
 uint8_t TAX(void);
 uint8_t TAY(void);
+uint8_t TSX(void);
 uint8_t TXA(void);
 uint8_t TYA(void);
-uint8_t NOP(void);
+uint8_t TXS(void);
 uint8_t ILL(void);
-uint8_t SEC(void);
-uint8_t CLC(void);
-uint8_t SEI(void);
-uint8_t CLI(void);
-uint8_t INC(void);
-uint8_t INX(void);
-uint8_t INY(void);
-uint8_t BNE(void);
-uint8_t BCS(void);
-uint8_t BCC(void);
-uint8_t BEQ(void);
-uint8_t BMI(void);
-uint8_t BPL(void);
-uint8_t BIT(void);
-uint8_t CMP(void);
-uint8_t CPX(void);
-uint8_t CPY(void);
-uint8_t JMP(void);
-uint8_t PHA(void);
-uint8_t PLA(void);
-uint8_t JSR(void);
-uint8_t RTS(void);
-uint8_t RTI(void);
-uint8_t ADC(void);
-uint8_t SBC(void);
-uint8_t AND(void);
-uint8_t ASL(void);
-uint8_t BRK(void);
-
 
 // Addressing modes
 uint8_t IMM(void);
