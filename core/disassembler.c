@@ -65,6 +65,17 @@ void Disassembler_parse_section(const uint16_t start, const uint16_t end) {
         } else if (addr_fn == REL) {
             const uint8_t data = CPU_read(addr++);
             snprintf(operand_str, operand_len, "$%02X {REL}", data);
+        } else if (addr_fn == IND) {
+            const uint8_t lo = CPU_read(addr++);
+            const uint8_t hi = CPU_read(addr++);
+            const uint16_t abs = (hi << 8) | lo;
+            snprintf(operand_str, operand_len, "($%04X) {IND}", abs);
+        } else if (addr_fn == IZX) {
+            const uint8_t data = CPU_read(addr++);
+            snprintf(operand_str, operand_len, "($%02X),X {IZX}", data);
+        } else if (addr_fn == IZY) {
+            const uint8_t data = CPU_read(addr++);
+            snprintf(operand_str, operand_len, "($%02X),Y {IZY}", data);
         }
 
         snprintf(buffer, 32,

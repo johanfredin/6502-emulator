@@ -128,15 +128,18 @@ uint8_t TXS(void);
 uint8_t ILL(void);
 
 // Addressing modes
-uint8_t IMM(void);
 uint8_t ABS(void);
 uint8_t ABX(void);
 uint8_t ABY(void);
+uint8_t IMM(void);
 uint8_t IMP(void);
+uint8_t IND(void);
+uint8_t IZX(void);
+uint8_t IZY(void);
+uint8_t REL(void);
 uint8_t ZP0(void);
 uint8_t ZPX(void);
 uint8_t ZPY(void);
-uint8_t REL(void);
 
 
 #endif //INC_6502_EMULATOR_CPU_H

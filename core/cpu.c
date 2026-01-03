@@ -109,6 +109,11 @@ static bool is_implied_addressing() {
 // Public functions
 // =========================================================
 void CPU_load_instructions(void) {
+    // Start by filling the whole array with ILL opcodes then populate the legal ones
+    for (int i = 0; i <= 0xFF; i++) {
+        instructions[i] = (Instruction){.name = "???", .addressing = IMP, .opcode = ILL, .cycles = 2};
+    }
+
     // Set our defined ones
     instructions[0x69] = (Instruction){.name = "ADC", .addressing = IMM, .opcode = ADC, .cycles = 2};
     instructions[0x65] = (Instruction){.name = "ADC", .addressing = ZP0, .opcode = ADC, .cycles = 3};
@@ -116,12 +121,16 @@ void CPU_load_instructions(void) {
     instructions[0x6D] = (Instruction){.name = "ADC", .addressing = ABS, .opcode = ADC, .cycles = 4};
     instructions[0x7D] = (Instruction){.name = "ADC", .addressing = ABX, .opcode = ADC, .cycles = 4};
     instructions[0x79] = (Instruction){.name = "ADC", .addressing = ABY, .opcode = ADC, .cycles = 4};
+    instructions[0x61] = (Instruction){.name = "ADC", .addressing = IZX, .opcode = ADC, .cycles = 6};
+    instructions[0x71] = (Instruction){.name = "ADC", .addressing = IZY, .opcode = ADC, .cycles = 5};
     instructions[0x29] = (Instruction){.name = "AND", .addressing = IMM, .opcode = AND, .cycles = 2};
     instructions[0x25] = (Instruction){.name = "AND", .addressing = ZP0, .opcode = AND, .cycles = 3};
     instructions[0x35] = (Instruction){.name = "AND", .addressing = ZPX, .opcode = AND, .cycles = 4};
     instructions[0x2D] = (Instruction){.name = "AND", .addressing = ABS, .opcode = AND, .cycles = 4};
     instructions[0x3D] = (Instruction){.name = "AND", .addressing = ABX, .opcode = AND, .cycles = 4};
     instructions[0x39] = (Instruction){.name = "AND", .addressing = ABY, .opcode = AND, .cycles = 4};
+    instructions[0x21] = (Instruction){.name = "AND", .addressing = IZX, .opcode = AND, .cycles = 6};
+    instructions[0x31] = (Instruction){.name = "AND", .addressing = IZY, .opcode = AND, .cycles = 5};
     instructions[0x0A] = (Instruction){.name = "ASL", .addressing = IMP, .opcode = ASL, .cycles = 2};
     instructions[0x06] = (Instruction){.name = "ASL", .addressing = ZP0, .opcode = ASL, .cycles = 5};
     instructions[0x16] = (Instruction){.name = "ASL", .addressing = ZPX, .opcode = ASL, .cycles = 6};
@@ -148,12 +157,14 @@ void CPU_load_instructions(void) {
     instructions[0xCD] = (Instruction){.name = "CMP", .addressing = ABS, .opcode = CMP, .cycles = 4};
     instructions[0xDD] = (Instruction){.name = "CMP", .addressing = ABX, .opcode = CMP, .cycles = 4};
     instructions[0xD9] = (Instruction){.name = "CMP", .addressing = ABY, .opcode = CMP, .cycles = 4};
-    instructions[0xC0] = (Instruction){.name = "CPY", .addressing = IMM, .opcode = CPY, .cycles = 2};
-    instructions[0xC4] = (Instruction){.name = "CPY", .addressing = ZP0, .opcode = CPY, .cycles = 3};
-    instructions[0xCC] = (Instruction){.name = "CPY", .addressing = ABS, .opcode = CPY, .cycles = 4};
+    instructions[0xC1] = (Instruction){.name = "CMP", .addressing = IZX, .opcode = CMP, .cycles = 6};
+    instructions[0xD1] = (Instruction){.name = "CMP", .addressing = IZY, .opcode = CMP, .cycles = 5};
     instructions[0xE0] = (Instruction){.name = "CPX", .addressing = IMM, .opcode = CPX, .cycles = 2};
     instructions[0xE4] = (Instruction){.name = "CPX", .addressing = ZP0, .opcode = CPX, .cycles = 3};
     instructions[0xEC] = (Instruction){.name = "CPX", .addressing = ABS, .opcode = CPX, .cycles = 4};
+    instructions[0xC0] = (Instruction){.name = "CPY", .addressing = IMM, .opcode = CPY, .cycles = 2};
+    instructions[0xC4] = (Instruction){.name = "CPY", .addressing = ZP0, .opcode = CPY, .cycles = 3};
+    instructions[0xCC] = (Instruction){.name = "CPY", .addressing = ABS, .opcode = CPY, .cycles = 4};
     instructions[0xC6] = (Instruction){.name = "DEC", .addressing = ZP0, .opcode = DEC, .cycles = 5};
     instructions[0xD6] = (Instruction){.name = "DEC", .addressing = ZPX, .opcode = DEC, .cycles = 6};
     instructions[0xCE] = (Instruction){.name = "DEC", .addressing = ABS, .opcode = DEC, .cycles = 6};
@@ -166,6 +177,8 @@ void CPU_load_instructions(void) {
     instructions[0x4D] = (Instruction){.name = "EOR", .addressing = ABS, .opcode = EOR, .cycles = 4};
     instructions[0x5D] = (Instruction){.name = "EOR", .addressing = ABX, .opcode = EOR, .cycles = 4};
     instructions[0x59] = (Instruction){.name = "EOR", .addressing = ABY, .opcode = EOR, .cycles = 4};
+    instructions[0x41] = (Instruction){.name = "EOR", .addressing = IZX, .opcode = EOR, .cycles = 6};
+    instructions[0x51] = (Instruction){.name = "EOR", .addressing = IZY, .opcode = EOR, .cycles = 5};
     instructions[0xE6] = (Instruction){.name = "INC", .addressing = ZP0, .opcode = INC, .cycles = 5};
     instructions[0xF6] = (Instruction){.name = "INC", .addressing = ZPX, .opcode = INC, .cycles = 6};
     instructions[0xEE] = (Instruction){.name = "INC", .addressing = ABS, .opcode = INC, .cycles = 6};
@@ -173,6 +186,7 @@ void CPU_load_instructions(void) {
     instructions[0xE8] = (Instruction){.name = "INX", .addressing = IMP, .opcode = INX, .cycles = 2};
     instructions[0xC8] = (Instruction){.name = "INY", .addressing = IMP, .opcode = INY, .cycles = 2};
     instructions[0x4C] = (Instruction){.name = "JMP", .addressing = ABS, .opcode = JMP, .cycles = 3};
+    instructions[0x6C] = (Instruction){.name = "JMP", .addressing = IND, .opcode = JMP, .cycles = 5};
     instructions[0x20] = (Instruction){.name = "JSR", .addressing = ABS, .opcode = JSR, .cycles = 6};
     instructions[0xA9] = (Instruction){.name = "LDA", .addressing = IMM, .opcode = LDA, .cycles = 2};
     instructions[0xA5] = (Instruction){.name = "LDA", .addressing = ZP0, .opcode = LDA, .cycles = 3};
@@ -180,12 +194,18 @@ void CPU_load_instructions(void) {
     instructions[0xAD] = (Instruction){.name = "LDA", .addressing = ABS, .opcode = LDA, .cycles = 4};
     instructions[0xBD] = (Instruction){.name = "LDA", .addressing = ABX, .opcode = LDA, .cycles = 4};
     instructions[0xB9] = (Instruction){.name = "LDA", .addressing = ABY, .opcode = LDA, .cycles = 4};
+    instructions[0xA1] = (Instruction){.name = "LDA", .addressing = IZX, .opcode = LDA, .cycles = 6};
+    instructions[0xB1] = (Instruction){.name = "LDA", .addressing = IZY, .opcode = LDA, .cycles = 5};
     instructions[0xA2] = (Instruction){.name = "LDX", .addressing = IMM, .opcode = LDX, .cycles = 2};
     instructions[0xA6] = (Instruction){.name = "LDX", .addressing = ZP0, .opcode = LDX, .cycles = 3};
+    instructions[0xB6] = (Instruction){.name = "LDX", .addressing = ZPY, .opcode = LDX, .cycles = 4};
     instructions[0xAE] = (Instruction){.name = "LDX", .addressing = ABS, .opcode = LDX, .cycles = 4};
+    instructions[0xBE] = (Instruction){.name = "LDX", .addressing = ABY, .opcode = LDX, .cycles = 4};
     instructions[0xA0] = (Instruction){.name = "LDY", .addressing = IMM, .opcode = LDY, .cycles = 2};
     instructions[0xA4] = (Instruction){.name = "LDY", .addressing = ZP0, .opcode = LDY, .cycles = 3};
+    instructions[0xB4] = (Instruction){.name = "LDY", .addressing = ZPX, .opcode = LDY, .cycles = 4};
     instructions[0xAC] = (Instruction){.name = "LDY", .addressing = ABS, .opcode = LDY, .cycles = 4};
+    instructions[0xBC] = (Instruction){.name = "LDY", .addressing = ABX, .opcode = LDY, .cycles = 4};
     instructions[0x4A] = (Instruction){.name = "LSR", .addressing = IMP, .opcode = LSR, .cycles = 2};
     instructions[0x46] = (Instruction){.name = "LSR", .addressing = ZP0, .opcode = LSR, .cycles = 5};
     instructions[0x56] = (Instruction){.name = "LSR", .addressing = ZPX, .opcode = LSR, .cycles = 6};
@@ -198,6 +218,8 @@ void CPU_load_instructions(void) {
     instructions[0x0D] = (Instruction){.name = "ORA", .addressing = ABS, .opcode = ORA, .cycles = 4};
     instructions[0x1D] = (Instruction){.name = "ORA", .addressing = ABX, .opcode = ORA, .cycles = 4};
     instructions[0x19] = (Instruction){.name = "ORA", .addressing = ABY, .opcode = ORA, .cycles = 4};
+    instructions[0x01] = (Instruction){.name = "ORA", .addressing = IZX, .opcode = ORA, .cycles = 6};
+    instructions[0x11] = (Instruction){.name = "ORA", .addressing = IZY, .opcode = ORA, .cycles = 5};
     instructions[0x48] = (Instruction){.name = "PHA", .addressing = IMP, .opcode = PHA, .cycles = 3};
     instructions[0x08] = (Instruction){.name = "PHP", .addressing = IMP, .opcode = PHP, .cycles = 3};
     instructions[0x68] = (Instruction){.name = "PLA", .addressing = IMP, .opcode = PLA, .cycles = 4};
@@ -220,6 +242,8 @@ void CPU_load_instructions(void) {
     instructions[0xED] = (Instruction){.name = "SBC", .addressing = ABS, .opcode = SBC, .cycles = 4};
     instructions[0xFD] = (Instruction){.name = "SBC", .addressing = ABX, .opcode = SBC, .cycles = 4};
     instructions[0xF9] = (Instruction){.name = "SBC", .addressing = ABY, .opcode = SBC, .cycles = 4};
+    instructions[0xE1] = (Instruction){.name = "SBC", .addressing = IZX, .opcode = SBC, .cycles = 6};
+    instructions[0xF1] = (Instruction){.name = "SBC", .addressing = IZY, .opcode = SBC, .cycles = 5};
     instructions[0x38] = (Instruction){.name = "SEC", .addressing = IMP, .opcode = SEC, .cycles = 2};
     instructions[0xF8] = (Instruction){.name = "SED", .addressing = IMP, .opcode = SED, .cycles = 2};
     instructions[0x78] = (Instruction){.name = "SEI", .addressing = IMP, .opcode = SEI, .cycles = 2};
@@ -228,7 +252,8 @@ void CPU_load_instructions(void) {
     instructions[0x8D] = (Instruction){.name = "STA", .addressing = ABS, .opcode = STA, .cycles = 4};
     instructions[0x9D] = (Instruction){.name = "STA", .addressing = ABX, .opcode = STA, .cycles = 5};
     instructions[0x99] = (Instruction){.name = "STA", .addressing = ABY, .opcode = STA, .cycles = 5};
-    instructions[0x86] = (Instruction){.name = "STX", .addressing = ZP0, .opcode = STX, .cycles = 3};
+    instructions[0x81] = (Instruction){.name = "STA", .addressing = IZX, .opcode = STA, .cycles = 6};
+    instructions[0x91] = (Instruction){.name = "STA", .addressing = IZY, .opcode = STA, .cycles = 6};
     instructions[0x96] = (Instruction){.name = "STX", .addressing = ZPY, .opcode = STX, .cycles = 4};
     instructions[0x8E] = (Instruction){.name = "STX", .addressing = ABS, .opcode = STX, .cycles = 4};
     instructions[0x84] = (Instruction){.name = "STY", .addressing = ZP0, .opcode = STY, .cycles = 3};
@@ -609,8 +634,7 @@ uint8_t LSR(void) {
      * byte from memory, but modify the accumulator directly.
      * If not then we DO want to read the next byte and write it back into memory.
      */
-    const addressing_fn addressing_mode = CPU_get_instruction(cpu.curr_opcode)->addressing;
-    if (addressing_mode == IMP) {
+    if (is_implied_addressing()) {
         data = cpu.a;
         set_flag(FLAG_C, data & 0x01);
         res = data >> 1;
@@ -839,14 +863,6 @@ uint8_t TYA(void) {
 // Addressing modes
 // ==============================================
 
-
-uint8_t IMM(void) {
-    // Immediate mode, set absolute address to pc and inc pc
-    // Requires no additional cycles
-    cpu.addr_abs = cpu.pc++;
-    return 0;
-}
-
 uint8_t ABS(void) {
     // Absolute addressing mode, read the lo and hi byte from pc and or together to 16 bit word, no additional cycle
     const uint16_t lo = CPU_read(cpu.pc++);
@@ -879,9 +895,85 @@ uint8_t ABY(void) {
     return 0;
 }
 
+uint8_t IMM(void) {
+    // Immediate mode, set absolute address to pc and inc pc
+    // Requires no additional cycles
+    cpu.addr_abs = cpu.pc++;
+    return 0;
+}
+
 uint8_t IMP(void) {
     // There could be stuff going on with the accumulator in implied mode
     cpu.curr_opcode = cpu.a;
+    return 0;
+}
+
+uint8_t IND(void) {
+    /*
+     * Indirect addressing mode meaning the location we are reading is a 16-bit pointer to the actual
+     * address to set addr_abs to.
+     */
+    const uint16_t ptr_lo = CPU_read(cpu.pc++) & 0x00FF;
+    const uint16_t ptr_hi = CPU_read(cpu.pc++) & 0x00FF;
+
+    const uint16_t data = (ptr_hi << 8) | ptr_lo;
+
+    /*
+     * There is a bug in the 6502 where if the low byte of the address is 0xFF it does
+     * not jump to the next page in memory but wraps around in the same page
+     */
+    const uint8_t new_addr_lo = CPU_read(data);
+    uint16_t new_addr_hi = 0;
+    if (ptr_lo == 0x00FF) {
+        new_addr_hi = CPU_read(data & 0xFF00) << 8;
+    } else {
+        new_addr_hi = CPU_read(data + 1);
+    }
+    cpu.addr_abs = new_addr_hi << 8 | new_addr_lo;
+
+    return 0;
+}
+
+uint8_t IZX(void) {
+    /*
+     * Pre-indexed indirect addressing mode in the zero page.
+     * Pc is set to hi-byte+x+1 | lo-byte+x to data at location read
+     */
+    const uint16_t ptr = CPU_read(cpu.pc++) & 0x00FF;
+    const uint16_t x = cpu.x;
+
+    const uint8_t new_addr_lo = CPU_read(ptr + x);
+    const uint8_t new_addr_hi = CPU_read(ptr + x + 1);
+
+    cpu.addr_abs = new_addr_hi << 8 | new_addr_lo;
+    return 0;
+}
+
+uint8_t IZY(void) {
+    /*
+     * Address Mode: Indirect Y
+     * The supplied 8-bit address indexes a location in page 0x00. From
+     * here the actual 16-bit address is read, and the contents of
+     * Y Register are added to it to offset it. If the offset causes a
+     * change in the page, then an additional clock cycle is required.
+     */
+    const uint16_t ptr = CPU_read(cpu.pc++) & 0x00FF;
+    const uint16_t lo = CPU_read(ptr);
+    const uint16_t hi = CPU_read(ptr + 1);
+
+    cpu.addr_abs = ((hi << 8) | lo) + cpu.y;
+    if ((cpu.addr_abs & 0xFF00) != (hi << 8)) {
+        return 1;
+    }
+    return 0;
+}
+
+uint8_t REL(void) {
+    cpu.addr_rel = CPU_read(cpu.pc++);
+
+    if (cpu.addr_rel & 0x80) {
+        cpu.addr_rel |= 0xFF00;
+    }
     return 0;
 }
 
@@ -897,15 +989,6 @@ uint8_t ZPX(void) {
 
 uint8_t ZPY(void) {
     cpu.addr_abs = (CPU_read(cpu.pc++) + cpu.y) & 0x00FF;
-    return 0;
-}
-
-uint8_t REL(void) {
-    cpu.addr_rel = CPU_read(cpu.pc++);
-
-    if (cpu.addr_rel & 0x80) {
-        cpu.addr_rel |= 0xFF00;
-    }
     return 0;
 }
 
