@@ -374,7 +374,7 @@ uint8_t AND(void) {
     cpu.a &= CPU_read(cpu.addr_abs);
     set_flag(FLAG_Z, cpu.a == 0);
     set_flag(FLAG_N, cpu.a & 0x80);
-    return 0;
+    return 1;
 }
 
 uint8_t ASL(void) {
@@ -553,7 +553,7 @@ uint8_t EOR(void) {
     cpu.a ^= data;
     set_flag(FLAG_Z, cpu.a == 0);
     set_flag(FLAG_N, cpu.a & 0x80);
-    return 0;
+    return 1;
 }
 
 uint8_t ILL(void) {
@@ -904,7 +904,7 @@ uint8_t IMM(void) {
 
 uint8_t IMP(void) {
     // There could be stuff going on with the accumulator in implied mode
-    cpu.curr_opcode = cpu.a;
+    // cpu.curr_opcode = cpu.a;
     return 0;
 }
 
@@ -940,10 +940,8 @@ uint8_t IZX(void) {
      * Pc is set to hi-byte+x+1 | lo-byte+x to data at location read
      */
     const uint16_t ptr = CPU_read(cpu.pc++) & 0x00FF;
-    const uint16_t x = cpu.x;
-
-    const uint8_t new_addr_lo = CPU_read(ptr + x);
-    const uint8_t new_addr_hi = CPU_read(ptr + x + 1);
+    const uint8_t new_addr_lo = CPU_read(ptr + cpu.x);
+    const uint8_t new_addr_hi = CPU_read(ptr + cpu.x + 1);
 
     cpu.addr_abs = new_addr_hi << 8 | new_addr_lo;
     return 0;
