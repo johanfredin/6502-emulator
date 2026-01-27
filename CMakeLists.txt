@@ -1,7 +1,19 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.31)
 project(6502_emulator C)
 
+set(CMAKE_COMPILER clang)
 set(CMAKE_C_STANDARD 99)
+
+# Include FetchContent for downloading Unity
+include(FetchContent)
+
+# Fetch Unity testing framework
+FetchContent_Declare(
+        unity
+        GIT_REPOSITORY https://github.com/ThrowTheSwitch/Unity.git
+        GIT_TAG v2.5.2
+)
+FetchContent_MakeAvailable(unity)
 
 add_library(6502_emulator_lib SHARED
         core/cpu.c
@@ -12,6 +24,19 @@ add_library(6502_emulator_lib SHARED
         core/disassembler.h
         core/rom.c
         core/rom.h
+)
+
+# Enable testing
+enable_testing()
+
+# Add the tests subdirectory
+add_subdirectory(test)
+
+# Add custom target that just runs the tests
+add_custom_target(check
+        COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Running tests..."
 )
 
 add_executable(6502_emulator

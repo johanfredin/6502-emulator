@@ -14,7 +14,6 @@
 static uint8_t ram[RAM_SIZE];
 
 void BUS_init(void) {
-    // Set the default ram to NOOP to prevent calling non-existing IRQ handlers (since 0 == BRK)
     memset(ram, 0, RAM_SIZE);
 }
 

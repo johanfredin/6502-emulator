@@ -277,7 +277,7 @@ void CPU_write(const uint16_t addr, const uint8_t data) {
     BUS_write(addr, data);
 }
 
-const CPU *CPU_get_state(void) {
+CPU *CPU_get_state(void) {
     return &cpu;
 }
 
