@@ -5,11 +5,11 @@ set(TEST_FILES
 
 # Handle all test files in one loop
 foreach(test ${TEST_FILES})
-    add_executable(${test} ${test}.c)
+    add_executable(${test} ${test}.cpp)
     target_link_libraries(${test}
             PRIVATE
             6502_emulator_lib
-            unity
+            gtest_main
     )
     add_test(NAME ${test} COMMAND ${test})
 endforeach()

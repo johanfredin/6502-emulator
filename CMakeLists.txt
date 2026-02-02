@@ -1,19 +1,20 @@
 cmake_minimum_required(VERSION 3.31)
-project(6502_emulator C)
+project(6502_emulator C CXX)
 
 set(CMAKE_COMPILER clang)
 set(CMAKE_C_STANDARD 99)
+set(CMAKE_CXX_STANDARD 17)
 
 # Include FetchContent for downloading Unity
 include(FetchContent)
 
 # Fetch Unity testing framework
 FetchContent_Declare(
-        unity
-        GIT_REPOSITORY https://github.com/ThrowTheSwitch/Unity.git
-        GIT_TAG v2.5.2
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG v1.14.0
 )
-FetchContent_MakeAvailable(unity)
+FetchContent_MakeAvailable(googletest)
 
 add_library(6502_emulator_lib SHARED
         core/cpu.c
